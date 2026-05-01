@@ -1,0 +1,2288 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="PSD 레이어 추출, 스프라이트 시트 생성, 픽셀 이미지 확대, 파일명 교체를 브라우저에서 처리하는 무료 이미지 도구입니다. 파일은 서버로 업로드되지 않습니다.">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="통합 이미지 유틸리티">
+  <meta property="og:description" content="PSD 레이어 추출, 스프라이트 시트 생성, 이미지 스케일, 파일명 교체를 한 곳에서 처리합니다.">
+  <meta property="og:type" content="website">
+  <title>통합 이미지 유틸리티 - PSD 레이어 추출, 스프라이트 시트, 이미지 스케일러</title>
+  <!--
+    AdSense를 승인받은 뒤 아래 주석을 실제 코드로 교체하세요.
+    예: <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_ID" crossorigin="anonymous"></script>
+  -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/psd.js/3.4.0/psd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f6fb;
+      --panel: #ffffff;
+      --panel-2: #f8fafc;
+      --text: #162033;
+      --muted: #667085;
+      --line: #d7deea;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --accent: #16a34a;
+      --danger: #dc2626;
+      --shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --bg: #0f172a;
+        --panel: #182235;
+        --panel-2: #111827;
+        --text: #eef2ff;
+        --muted: #9aa7bd;
+        --line: #314055;
+        --primary: #60a5fa;
+        --primary-hover: #93c5fd;
+        --accent: #34d399;
+        --danger: #f87171;
+        --shadow: 0 18px 46px rgba(0, 0, 0, 0.36);
+      }
+    }
+
+    [data-theme="light"] {
+      color-scheme: light;
+      --bg: #f4f6fb;
+      --panel: #ffffff;
+      --panel-2: #f8fafc;
+      --text: #162033;
+      --muted: #667085;
+      --line: #d7deea;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --accent: #16a34a;
+      --danger: #dc2626;
+      --shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
+    }
+
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #0f172a;
+      --panel: #182235;
+      --panel-2: #111827;
+      --text: #eef2ff;
+      --muted: #9aa7bd;
+      --line: #314055;
+      --primary: #60a5fa;
+      --primary-hover: #93c5fd;
+      --accent: #34d399;
+      --danger: #f87171;
+      --shadow: 0 18px 46px rgba(0, 0, 0, 0.36);
+    }
+
+    * { box-sizing: border-box; }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, "Malgun Gothic", sans-serif;
+    }
+
+    button, input {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-2);
+      color: var(--text);
+      padding: 9px 13px;
+      cursor: pointer;
+    }
+
+    button:hover:not(:disabled) {
+      border-color: var(--primary);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+    }
+
+    input[type="file"], input[type="text"] {
+      color: var(--text);
+    }
+
+    input[type="text"] {
+      width: 170px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 7px 9px;
+    }
+
+    .app {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 24px 0 40px;
+    }
+
+    .site-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 12px 0 18px;
+    }
+
+    .site-nav a, .site-footer a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .site-nav a:hover, .site-footer a:hover {
+      text-decoration: underline;
+    }
+
+    .privacy-note {
+      margin-bottom: 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+      padding: 12px 14px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .ad-slot {
+      display: none;
+      min-height: 90px;
+      align-items: center;
+      justify-content: center;
+      margin: 14px 0;
+      border: 1px dashed var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .ad-slot.has-ad {
+      display: flex;
+    }
+
+    .global-drop-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 23, 42, 0.78);
+      color: #fff;
+      font-size: 24px;
+      font-weight: 700;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .global-drop-overlay.active {
+      display: flex;
+    }
+
+    .help-tip {
+      position: relative;
+      display: inline-flex;
+      width: 22px;
+      height: 22px;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: var(--panel);
+      color: var(--muted);
+      font-weight: 700;
+      cursor: help;
+    }
+
+    .help-tip::after {
+      display: none;
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 8px);
+      width: 260px;
+      transform: translateX(-50%);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--text);
+      padding: 10px;
+      box-shadow: var(--shadow);
+      content: attr(data-help);
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 1.5;
+      text-align: left;
+      z-index: 5;
+    }
+
+    .help-tip:hover::after, .help-tip:focus::after {
+      display: block;
+    }
+
+    .cookie-panel {
+      position: fixed;
+      left: 16px;
+      right: 16px;
+      bottom: 16px;
+      z-index: 40;
+      display: none;
+      max-width: 760px;
+      margin: 0 auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      color: var(--text);
+    }
+
+    .cookie-panel.active {
+      display: block;
+    }
+
+    .cookie-panel p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .cookie-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .site-footer {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto 32px;
+      padding: 18px 0 0;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .site-footer nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .title h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    .title p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .theme-toggle {
+      min-width: 112px;
+      background: var(--panel);
+    }
+
+    .top-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .language-control {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 7px 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .language-control select {
+      border: 0;
+      background: transparent;
+      color: var(--text);
+      font: inherit;
+      outline: none;
+    }
+
+    .translate-link {
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .translate-link:hover {
+      text-decoration: underline;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .tab {
+      min-height: 44px;
+      border-radius: 10px;
+      background: var(--panel);
+      box-shadow: none;
+      font-weight: 700;
+    }
+
+    .tab.active {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .panel {
+      display: none;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    .section-head {
+      margin-bottom: 18px;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    .section-head p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .drop-zone {
+      border: 2px dashed var(--line);
+      border-radius: 12px;
+      background: var(--panel-2);
+      padding: 32px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: var(--primary);
+      background: color-mix(in srgb, var(--primary) 10%, var(--panel-2));
+    }
+
+    .primary-btn {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .primary-btn:hover:not(:disabled) {
+      background: var(--primary-hover);
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 16px 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .check-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .loading {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      align-items: center;
+      justify-content: center;
+      background: rgba(2, 6, 23, 0.72);
+      color: #fff;
+      text-align: center;
+    }
+
+    .loading.active {
+      display: flex;
+    }
+
+    .spinner {
+      width: 42px;
+      height: 42px;
+      margin: 0 auto 14px;
+      border: 4px solid rgba(255, 255, 255, 0.25);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .tool-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .output {
+      margin-top: 18px;
+    }
+
+    canvas {
+      max-width: 100%;
+      border: 1px solid var(--line);
+      background: transparent;
+    }
+
+    .scale-layout {
+      text-align: center;
+    }
+
+    .scale-buttons button.active {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .paste-area {
+      width: min(460px, 100%);
+      margin: 18px auto;
+      border: 2px dashed var(--line);
+      border-radius: 12px;
+      background: var(--panel-2);
+      padding: 28px;
+      color: var(--muted);
+    }
+
+    .preview-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .preview-item {
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+    }
+
+    .preview-item canvas {
+      display: block;
+      margin-bottom: 10px;
+      image-rendering: pixelated;
+    }
+
+    .preview-item .item-name {
+      max-width: 150px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .rename-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .rename-column {
+      display: flex;
+      flex-direction: column;
+      min-height: 460px;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+
+    .file-list {
+      flex: 1;
+      list-style: none;
+      margin: 12px 0 0;
+      padding: 0;
+      overflow-y: auto;
+      max-height: 500px;
+    }
+
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .file-item.sortable-ghost {
+      opacity: 0.45;
+    }
+
+    .drag-handle {
+      color: var(--muted);
+      cursor: grab;
+      font-weight: 700;
+      user-select: none;
+    }
+
+    .thumb {
+      width: 38px;
+      height: 38px;
+      border-radius: 6px;
+      object-fit: cover;
+      background: #8892a6;
+    }
+
+    .file-info {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 13px;
+    }
+
+    .remove-btn {
+      border: 0;
+      color: var(--danger);
+      background: transparent;
+      font-size: 20px;
+      line-height: 1;
+      padding: 4px 8px;
+    }
+
+    .center-actions {
+      display: flex;
+      justify-content: center;
+      margin-top: 18px;
+    }
+
+    .transfer-actions {
+      display: none;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+    }
+
+    .transfer-actions.active {
+      display: flex;
+    }
+
+    .transfer-actions button {
+      font-size: 13px;
+    }
+
+    @media (max-width: 820px) {
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .top-actions {
+        justify-content: flex-start;
+      }
+
+      .tabs {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .rename-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .tabs {
+        grid-template-columns: 1fr;
+      }
+
+      .panel {
+        padding: 16px;
+      }
+
+      .status-row {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="topbar">
+      <div class="title">
+        <h1>통합 이미지 유틸리티</h1>
+        <p>레이어 추출, 스프라이트 시트, 이미지 스케일, 파일명 교체를 한 파일에서 사용합니다.</p>
+      </div>
+      <div class="top-actions">
+        <label class="language-control">
+          <span id="languageLabel">언어</span>
+          <select id="languageSelect" aria-label="Language">
+            <option value="ko">한국어</option>
+            <option value="en">English</option>
+            <option value="zh">中文</option>
+            <option value="ja">日本語</option>
+          </select>
+        </label>
+        <a class="translate-link" id="googleTranslateLink" href="#" target="_blank" rel="noopener">다른 언어는 Google 번역</a>
+        <button class="theme-toggle" id="themeToggle" type="button">다크 모드</button>
+      </div>
+    </div>
+
+    <nav class="site-nav" aria-label="사이트 링크">
+      <a href="./index.html">도구</a>
+      <a href="./privacy.html">개인정보 처리방침</a>
+      <a href="./terms.html">이용 안내</a>
+      <a href="./contact.html">문의</a>
+    </nav>
+
+    <div class="privacy-note">
+      이 도구는 선택한 파일을 서버로 업로드하지 않고 현재 브라우저 안에서 처리합니다.
+    </div>
+
+    <nav class="tabs" aria-label="도구 선택">
+      <button class="tab active" type="button" data-tab="layerPanel">레이어 추출</button>
+      <button class="tab" type="button" data-tab="sheetPanel">스프라이트 시트</button>
+      <button class="tab" type="button" data-tab="scalePanel">이미지 스케일</button>
+      <button class="tab" type="button" data-tab="renamePanel">파일명 교체</button>
+    </nav>
+
+    <section class="panel active" id="layerPanel">
+      <div class="section-head">
+        <h2>PSD 레이어 추출기</h2>
+        <p>PSD 레이어를 원본 캔버스 크기의 PNG 파일로 추출하고 ZIP으로 저장합니다.</p>
+      </div>
+      <div class="drop-zone" id="layerDrop">
+        <input type="file" id="layerFile" hidden accept=".psd">
+        <strong>PSD 파일을 드래그하거나 클릭하여 업로드</strong>
+        <div style="margin-top:8px;color:var(--muted);font-size:13px;">브라우저 성능에 따라 큰 PSD는 시간이 걸릴 수 있습니다.</div>
+      </div>
+      <div class="status-row">
+        <label class="check-row">
+          <input type="checkbox" id="layerNumbering">
+          파일명 앞에 번호 붙이기
+          <span class="help-tip" tabindex="0" data-help="체크하면 추출 순서대로 1.레이어명.png, 2.레이어명.png처럼 앞에 번호를 붙입니다. 체크를 끄면 PSD 레이어 이름만 파일명으로 사용합니다.">?</span>
+        </label>
+        <label class="check-row" id="layerNumberingDirectionRow" hidden>
+          <input type="checkbox" id="layerNumberingBottomUp">
+          아래에서 위로 번호 붙이기
+        </label>
+        <span id="layerStatus" data-state="waiting">대기 중...</span>
+      </div>
+      <div class="tool-row">
+        <button class="primary-btn" id="layerExport" type="button" disabled>추출 및 다운로드 (ZIP)</button>
+        <button type="button" id="layerClear">불러온 PSD 삭제</button>
+      </div>
+      <div class="preview-grid" id="layerPreview"></div>
+      <div class="transfer-actions" id="layerTransfers">
+        <button type="button" id="layerToSheet">추출 레이어를 스프라이트 시트로 보내기</button>
+        <button type="button" id="layerToScale">추출 레이어를 이미지 스케일러로 보내기</button>
+        <button type="button" id="layerToRename">추출 레이어를 파일명 교체기 원본에 넣기</button>
+      </div>
+    </section>
+
+    <section class="panel" id="sheetPanel">
+      <div class="section-head">
+        <h2>스프라이트 시트 생성기</h2>
+        <p>선택한 이미지들을 가로 방향으로 이어 붙여 하나의 PNG로 만듭니다.</p>
+      </div>
+      <div class="drop-zone" id="sheetDrop">
+        <input type="file" id="sheetFiles" multiple hidden accept="image/*">
+        <strong>이미지 파일을 드래그하거나 클릭하여 업로드</strong>
+        <div style="margin-top:8px;color:var(--muted);font-size:13px;">선택한 순서대로 가로 스프라이트 시트를 만듭니다.</div>
+      </div>
+      <div class="tool-row">
+        <button class="primary-btn" id="sheetMake" type="button">스프라이트 시트 만들기</button>
+        <button type="button" id="sheetClear">불러온 프레임 삭제</button>
+      </div>
+      <ul class="file-list" id="sheetFrameList"></ul>
+      <div class="output" id="sheetOutput"></div>
+      <div class="transfer-actions" id="sheetTransfers">
+        <button type="button" id="sheetToScale">생성된 시트를 이미지 스케일러로 보내기</button>
+        <button type="button" id="sheetToRename">생성된 시트를 파일명 교체기 원본에 넣기</button>
+      </div>
+    </section>
+
+    <section class="panel" id="scalePanel">
+      <div class="section-head">
+        <h2>이미지 스케일 + 클립보드</h2>
+        <p>이미지를 픽셀 보존 방식으로 2배, 3배, 4배 확대해서 저장합니다.</p>
+      </div>
+      <div class="scale-layout">
+        <div class="drop-zone" id="scaleDrop">
+          <input type="file" id="scaleFiles" multiple hidden accept="image/*">
+          <strong>이미지 파일을 드래그하거나 클릭하여 업로드</strong>
+          <div style="margin-top:8px;color:var(--muted);font-size:13px;">파일 업로드와 Ctrl + V 붙여넣기를 모두 사용할 수 있습니다.</div>
+        </div>
+        <div class="tool-row scale-buttons" style="justify-content:center;">
+          <button type="button" data-scale="2" class="active">x2</button>
+          <button type="button" data-scale="3">x3</button>
+          <button type="button" data-scale="4">x4</button>
+          <button type="button" id="scaleDownloadAll">현재 배율로 각각 다운로드</button>
+          <button type="button" id="scaleDownloadZip">현재 배율로 ZIP 다운로드</button>
+          <button type="button" id="scaleClear">불러온 이미지 비우기</button>
+        </div>
+        <div class="paste-area" id="scalePaste">Ctrl + V 로 이미지 붙여넣기</div>
+        <div class="preview-grid" id="scalePreview"></div>
+        <div class="transfer-actions" id="scaleTransfers">
+          <button type="button" id="scaleToRename">현재 배율 결과를 파일명 교체기 원본에 넣기</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="renamePanel">
+      <div class="section-head">
+        <h2>파일명 교체기</h2>
+        <p>왼쪽 파일명의 순서를 기준으로 오른쪽 원본 파일들을 같은 이름으로 압축합니다.</p>
+      </div>
+      <div class="rename-grid">
+        <div class="rename-column">
+          <div class="header-row">
+            <span>1. 변경될 파일명</span>
+            <div>
+              <button type="button" data-sort-list="renameLeftList">정렬</button>
+              <button type="button" data-clear-list="renameLeftList">삭제</button>
+            </div>
+          </div>
+          <div class="drop-zone" id="renameLeftDrop">여기에 파일을 드래그하거나 클릭</div>
+          <input type="file" id="renameLeftInput" multiple hidden>
+          <ul class="file-list" id="renameLeftList"></ul>
+        </div>
+        <div class="rename-column">
+          <div class="header-row">
+            <span>2. 원본 이미지</span>
+            <div>
+              <button type="button" data-sort-list="renameRightList">정렬</button>
+              <button type="button" data-clear-list="renameRightList">삭제</button>
+            </div>
+          </div>
+          <div class="drop-zone" id="renameRightDrop">여기에 파일을 드래그하거나 클릭</div>
+          <input type="file" id="renameRightInput" multiple hidden>
+          <ul class="file-list" id="renameRightList"></ul>
+        </div>
+      </div>
+      <div class="center-actions">
+        <button class="primary-btn" id="renameConvert" type="button" disabled>개수를 맞춰주세요</button>
+      </div>
+    </section>
+
+    <div class="ad-slot" id="bottomAdSlot" aria-label="하단 광고 영역"></div>
+  </main>
+
+  <footer class="site-footer">
+    <nav aria-label="하단 링크">
+      <a href="./index.html">도구</a>
+      <a href="./privacy.html">개인정보 처리방침</a>
+      <a href="./terms.html">이용 안내</a>
+      <a href="./contact.html">문의</a>
+    </nav>
+    <div>통합 이미지 유틸리티는 브라우저 기반 무료 이미지 작업 도구입니다.</div>
+  </footer>
+
+  <div class="global-drop-overlay" id="globalDropOverlay">
+    <div>파일을 놓으면 현재 선택된 도구로 가져옵니다.</div>
+  </div>
+
+  <div class="cookie-panel" id="cookiePanel">
+    <p>이 사이트는 기본 기능에는 필수 쿠키가 필요하지 않습니다. 광고와 방문 분석을 사용하는 경우 쿠키 또는 유사 기술이 사용될 수 있습니다.</p>
+    <div class="cookie-actions">
+      <label class="check-row">
+        <input type="checkbox" id="adCookieConsent">
+        광고/분석 쿠키 사용 허용
+      </label>
+      <div>
+        <button type="button" id="cookieEssential">필수만 사용</button>
+        <button class="primary-btn" type="button" id="cookieSave">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="loading" id="loadingOverlay">
+    <div>
+      <div class="spinner"></div>
+      <strong id="loadingText">처리 중...</strong>
+    </div>
+  </div>
+
+  <script>
+    const translations = {
+      ko: {
+        pageTitle: "통합 이미지 유틸리티 - PSD 레이어 추출, 스프라이트 시트, 이미지 스케일러",
+        appTitle: "통합 이미지 유틸리티",
+        appSubtitle: "레이어 추출, 스프라이트 시트, 이미지 스케일, 파일명 교체를 한 파일에서 사용합니다.",
+        language: "언어",
+        googleTranslate: "다른 언어는 Google 번역",
+        darkMode: "다크 모드",
+        lightMode: "라이트 모드",
+        navTools: "도구",
+        navPrivacy: "개인정보 처리방침",
+        navTerms: "이용 안내",
+        navContact: "문의",
+        privacyNote: "이 도구는 선택한 파일을 서버로 업로드하지 않고 현재 브라우저 안에서 처리합니다.",
+        tabLayer: "레이어 추출",
+        tabSheet: "스프라이트 시트",
+        tabScale: "이미지 스케일",
+        tabRename: "파일명 교체",
+        layerTitle: "PSD 레이어 추출기",
+        layerDesc: "PSD 레이어를 원본 캔버스 크기의 PNG 파일로 추출하고 ZIP으로 저장합니다.",
+        layerDropTitle: "PSD 파일을 드래그하거나 클릭하여 업로드",
+        layerDropHint: "브라우저 성능에 따라 큰 PSD는 시간이 걸릴 수 있습니다.",
+        numbering: "파일명 앞에 번호 붙이기",
+        numberingBottomUp: "아래에서 위로 번호 붙이기",
+        numberingHelp: "번호 붙이기를 켜면 기본값은 Photoshop 레이어 패널의 위쪽에서 아래쪽 순서입니다. 아래에서 위로 번호 붙이기를 함께 켜면 가장 아래 레이어가 1.레이어명.png가 됩니다.",
+        waiting: "대기 중...",
+        layerExport: "추출 및 다운로드 (ZIP)",
+        layerClear: "불러온 PSD 삭제",
+        layerToSheet: "추출 레이어를 스프라이트 시트로 보내기",
+        layerToScale: "추출 레이어를 이미지 스케일러로 보내기",
+        layerToRename: "추출 레이어를 파일명 교체기 원본에 넣기",
+        sheetTitle: "스프라이트 시트 생성기",
+        sheetDesc: "선택한 이미지들을 가로 방향으로 이어 붙여 하나의 PNG로 만듭니다.",
+        imageDropTitle: "이미지 파일을 드래그하거나 클릭하여 업로드",
+        sheetDropHint: "선택한 순서대로 가로 스프라이트 시트를 만듭니다.",
+        sheetMake: "스프라이트 시트 만들기",
+        sheetClear: "불러온 프레임 삭제",
+        sheetDownload: "스프라이트 시트 다운로드",
+        sheetToScale: "생성된 시트를 이미지 스케일러로 보내기",
+        sheetToRename: "생성된 시트를 파일명 교체기 원본에 넣기",
+        scaleTitle: "이미지 스케일 + 클립보드",
+        scaleDesc: "이미지를 픽셀 보존 방식으로 2배, 3배, 4배 확대해서 저장합니다.",
+        scaleDropHint: "파일 업로드와 Ctrl + V 붙여넣기를 모두 사용할 수 있습니다.",
+        scaleDownloadAll: "현재 배율로 각각 다운로드",
+        scaleDownloadZip: "현재 배율로 ZIP 다운로드",
+        scaleClear: "불러온 이미지 비우기",
+        paste: "Ctrl + V 로 이미지 붙여넣기",
+        scaleToRename: "현재 배율 결과를 파일명 교체기 원본에 넣기",
+        renameTitle: "파일명 교체기",
+        renameDesc: "왼쪽 파일명의 순서를 기준으로 오른쪽 원본 파일들을 같은 이름으로 압축합니다.",
+        renameLeft: "1. 변경될 파일명",
+        renameRight: "2. 원본 이미지",
+        sort: "정렬",
+        clear: "삭제",
+        renameDrop: "여기에 파일을 드래그하거나 클릭",
+        matchCounts: "개수를 맞춰주세요",
+        bottomFooter: "통합 이미지 유틸리티는 브라우저 기반 무료 이미지 작업 도구입니다.",
+        globalDrop: "파일을 놓으면 현재 선택된 도구로 가져옵니다.",
+        cookieText: "이 사이트는 기본 기능에는 필수 쿠키가 필요하지 않습니다. 광고와 방문 분석을 사용하는 경우 쿠키 또는 유사 기술이 사용될 수 있습니다.",
+        cookieAllow: "광고/분석 쿠키 사용 허용",
+        cookieEssential: "필수만 사용",
+        save: "저장",
+        processing: "처리 중...",
+        loadingPsd: "PSD 파일 분석 중...",
+        loadingZip: "레이어 렌더링 및 ZIP 생성 중...",
+        loadingNames: "레이어 이름 갱신 중...",
+        psdReadError: "PSD 파일을 읽는 중 오류가 발생했습니다.",
+        psdLibraryError: "PSD 라이브러리를 불러오지 못했습니다. 인터넷 연결 또는 CDN 차단 여부를 확인하세요.",
+        selectImages: "이미지를 선택하세요.",
+        mixedSizeConfirm: "이미지 크기가 서로 다릅니다. 첫 이미지 크기에 맞춰 그릴까요?",
+        loadedLayer: "로드 완료: {name} / {count}개 레이어",
+        exportedLayer: "내보내기 완료: {count}개 레이어",
+        refreshedLayer: "미리보기 갱신: {count}개 레이어",
+        selectedImages: "{count}개 이미지 선택됨",
+        receivedImages: "{count}개 이미지가 전달됨",
+        framesReady: "{count}개 프레임 준비됨",
+        compressFiles: "{count}개 파일 압축하기"
+      },
+      en: {
+        pageTitle: "Integrated Image Utility - PSD Layer Exporter, Sprite Sheet, Image Scaler",
+        appTitle: "Integrated Image Utility",
+        appSubtitle: "Use layer export, sprite sheet creation, image scaling, and file renaming in one browser tool.",
+        language: "Language",
+        googleTranslate: "Use Google Translate for other languages",
+        darkMode: "Dark mode",
+        lightMode: "Light mode",
+        navTools: "Tools",
+        navPrivacy: "Privacy Policy",
+        navTerms: "Guide",
+        navContact: "Contact",
+        privacyNote: "This tool processes selected files inside your browser without uploading them to a server.",
+        tabLayer: "Layer Export",
+        tabSheet: "Sprite Sheet",
+        tabScale: "Image Scale",
+        tabRename: "File Rename",
+        layerTitle: "PSD Layer Exporter",
+        layerDesc: "Export PSD layers as canvas-sized PNG files and save them as a ZIP.",
+        layerDropTitle: "Drag a PSD file here or click to upload",
+        layerDropHint: "Large PSD files may take time depending on browser performance.",
+        numbering: "Add numbers before file names",
+        numberingBottomUp: "Number from bottom to top",
+        numberingHelp: "When numbering is enabled, the default order is from the top of the Photoshop Layers panel downward. If bottom-to-top numbering is also enabled, the bottom layer becomes 1.LayerName.png.",
+        waiting: "Waiting...",
+        layerExport: "Export and download (ZIP)",
+        layerClear: "Clear loaded PSD",
+        layerToSheet: "Send extracted layers to Sprite Sheet",
+        layerToScale: "Send extracted layers to Image Scaler",
+        layerToRename: "Send extracted layers to Rename originals",
+        sheetTitle: "Sprite Sheet Generator",
+        sheetDesc: "Combine selected images horizontally into a single PNG.",
+        imageDropTitle: "Drag image files here or click to upload",
+        sheetDropHint: "A horizontal sprite sheet is created in the selected order.",
+        sheetMake: "Create Sprite Sheet",
+        sheetClear: "Clear loaded frames",
+        sheetDownload: "Download sprite sheet",
+        sheetToScale: "Send generated sheet to Image Scaler",
+        sheetToRename: "Send generated sheet to Rename originals",
+        scaleTitle: "Image Scale + Clipboard",
+        scaleDesc: "Scale images by 2x, 3x, or 4x while preserving pixel edges.",
+        scaleDropHint: "You can upload files or paste images with Ctrl + V.",
+        scaleDownloadAll: "Download each at current scale",
+        scaleDownloadZip: "Download ZIP at current scale",
+        scaleClear: "Clear loaded images",
+        paste: "Paste images with Ctrl + V",
+        scaleToRename: "Send current-scale output to Rename originals",
+        renameTitle: "File Renamer",
+        renameDesc: "Use the left file-name order to package the right-side originals with matching names.",
+        renameLeft: "1. Target file names",
+        renameRight: "2. Original images",
+        sort: "Sort",
+        clear: "Clear",
+        renameDrop: "Drag files here or click",
+        matchCounts: "Match the counts",
+        bottomFooter: "Integrated Image Utility is a free browser-based image workflow tool.",
+        globalDrop: "Drop files to import them into the currently selected tool.",
+        cookieText: "This site does not require essential cookies for core features. Ads and analytics may use cookies or similar technologies.",
+        cookieAllow: "Allow ads/analytics cookies",
+        cookieEssential: "Essential only",
+        save: "Save",
+        processing: "Processing...",
+        loadingPsd: "Analyzing PSD file...",
+        loadingZip: "Rendering layers and creating ZIP...",
+        loadingNames: "Updating layer names...",
+        psdReadError: "An error occurred while reading the PSD file.",
+        psdLibraryError: "Could not load the PSD library. Check your internet connection or CDN blocking.",
+        selectImages: "Please select images.",
+        mixedSizeConfirm: "The images have different sizes. Draw them using the first image size?",
+        loadedLayer: "Loaded: {name} / {count} layers",
+        exportedLayer: "Export complete: {count} layers",
+        refreshedLayer: "Preview refreshed: {count} layers",
+        selectedImages: "{count} images selected",
+        receivedImages: "{count} images received",
+        framesReady: "{count} frames ready",
+        compressFiles: "Zip {count} files"
+      },
+      zh: {
+        pageTitle: "综合图像工具 - PSD 图层导出、精灵图、图像缩放",
+        appTitle: "综合图像工具",
+        appSubtitle: "在一个浏览器工具中完成图层导出、精灵图生成、图像缩放和文件名替换。",
+        language: "语言",
+        googleTranslate: "其他语言使用 Google 翻译",
+        darkMode: "深色模式",
+        lightMode: "浅色模式",
+        navTools: "工具",
+        navPrivacy: "隐私政策",
+        navTerms: "使用说明",
+        navContact: "联系",
+        privacyNote: "本工具会在当前浏览器中处理所选文件，不会上传到服务器。",
+        tabLayer: "图层导出",
+        tabSheet: "精灵图",
+        tabScale: "图像缩放",
+        tabRename: "文件名替换",
+        layerTitle: "PSD 图层导出器",
+        layerDesc: "将 PSD 图层导出为原画布大小的 PNG，并保存为 ZIP。",
+        layerDropTitle: "拖入 PSD 文件或点击上传",
+        layerDropHint: "较大的 PSD 可能会因浏览器性能而耗时较长。",
+        numbering: "在文件名前添加编号",
+        numberingBottomUp: "从下到上编号",
+        numberingHelp: "启用编号时，默认会从 Photoshop 图层面板最上方开始向下编号。如果同时启用从下到上编号，最下面的图层会变成 1.图层名.png。",
+        waiting: "等待中...",
+        layerExport: "导出并下载（ZIP）",
+        layerClear: "清除已载入 PSD",
+        layerToSheet: "将导出图层发送到精灵图",
+        layerToScale: "将导出图层发送到图像缩放",
+        layerToRename: "将导出图层发送到文件名替换原图",
+        sheetTitle: "精灵图生成器",
+        sheetDesc: "将所选图片横向拼接成一个 PNG。",
+        imageDropTitle: "拖入图片文件或点击上传",
+        sheetDropHint: "会按选择顺序生成横向精灵图。",
+        sheetMake: "生成精灵图",
+        sheetClear: "清除已载入帧",
+        sheetDownload: "下载精灵图",
+        sheetToScale: "将生成的精灵图发送到图像缩放",
+        sheetToRename: "将生成的精灵图发送到文件名替换原图",
+        scaleTitle: "图像缩放 + 剪贴板",
+        scaleDesc: "以保留像素边缘的方式将图像放大 2 倍、3 倍或 4 倍。",
+        scaleDropHint: "可以上传文件，也可以用 Ctrl + V 粘贴图片。",
+        scaleDownloadAll: "按当前倍率分别下载",
+        scaleDownloadZip: "按当前倍率下载 ZIP",
+        scaleClear: "清除已载入图片",
+        paste: "用 Ctrl + V 粘贴图片",
+        scaleToRename: "将当前倍率结果发送到文件名替换原图",
+        renameTitle: "文件名替换器",
+        renameDesc: "按照左侧文件名顺序，将右侧原图用对应名称打包。",
+        renameLeft: "1. 目标文件名",
+        renameRight: "2. 原始图片",
+        sort: "排序",
+        clear: "清除",
+        renameDrop: "拖入文件或点击",
+        matchCounts: "请匹配数量",
+        bottomFooter: "综合图像工具是一个免费的浏览器图像工作流工具。",
+        globalDrop: "放下文件后会导入到当前选择的工具。",
+        cookieText: "本网站的核心功能不需要必要 Cookie。广告和分析可能使用 Cookie 或类似技术。",
+        cookieAllow: "允许广告/分析 Cookie",
+        cookieEssential: "仅必要",
+        save: "保存",
+        processing: "处理中...",
+        loadingPsd: "正在分析 PSD 文件...",
+        loadingZip: "正在渲染图层并创建 ZIP...",
+        loadingNames: "正在更新图层名称...",
+        psdReadError: "读取 PSD 文件时发生错误。",
+        psdLibraryError: "无法加载 PSD 库。请检查网络连接或 CDN 是否被阻止。",
+        selectImages: "请选择图片。",
+        mixedSizeConfirm: "图片尺寸不一致。是否按第一张图片尺寸绘制？",
+        loadedLayer: "已载入：{name} / {count} 个图层",
+        exportedLayer: "导出完成：{count} 个图层",
+        refreshedLayer: "预览已更新：{count} 个图层",
+        selectedImages: "已选择 {count} 张图片",
+        receivedImages: "已接收 {count} 张图片",
+        framesReady: "{count} 帧已准备",
+        compressFiles: "压缩 {count} 个文件"
+      },
+      ja: {
+        pageTitle: "統合画像ユーティリティ - PSDレイヤー抽出、スプライトシート、画像スケーラー",
+        appTitle: "統合画像ユーティリティ",
+        appSubtitle: "レイヤー抽出、スプライトシート作成、画像スケール、ファイル名置換を1つのブラウザツールで使えます。",
+        language: "言語",
+        googleTranslate: "他の言語は Google 翻訳",
+        darkMode: "ダークモード",
+        lightMode: "ライトモード",
+        navTools: "ツール",
+        navPrivacy: "プライバシーポリシー",
+        navTerms: "利用案内",
+        navContact: "お問い合わせ",
+        privacyNote: "このツールは選択したファイルをサーバーへアップロードせず、ブラウザ内で処理します。",
+        tabLayer: "レイヤー抽出",
+        tabSheet: "スプライトシート",
+        tabScale: "画像スケール",
+        tabRename: "ファイル名置換",
+        layerTitle: "PSDレイヤー抽出",
+        layerDesc: "PSDレイヤーを元キャンバスサイズのPNGとして抽出し、ZIPで保存します。",
+        layerDropTitle: "PSDファイルをドラッグ、またはクリックしてアップロード",
+        layerDropHint: "大きなPSDはブラウザ性能によって時間がかかる場合があります。",
+        numbering: "ファイル名の前に番号を付ける",
+        numberingBottomUp: "下から上へ番号を付ける",
+        numberingHelp: "番号付けを有効にすると、初期設定では Photoshop のレイヤーパネルの上から下へ番号を付けます。下から上へ番号を付けるも有効にすると、一番下のレイヤーが 1.レイヤー名.png になります。",
+        waiting: "待機中...",
+        layerExport: "抽出してダウンロード（ZIP）",
+        layerClear: "読み込んだPSDを削除",
+        layerToSheet: "抽出レイヤーをスプライトシートへ送る",
+        layerToScale: "抽出レイヤーを画像スケーラーへ送る",
+        layerToRename: "抽出レイヤーをファイル名置換の元画像へ送る",
+        sheetTitle: "スプライトシート生成",
+        sheetDesc: "選択した画像を横方向につなげて1枚のPNGにします。",
+        imageDropTitle: "画像ファイルをドラッグ、またはクリックしてアップロード",
+        sheetDropHint: "選択した順番で横長のスプライトシートを作成します。",
+        sheetMake: "スプライトシートを作成",
+        sheetClear: "読み込んだフレームを削除",
+        sheetDownload: "スプライトシートをダウンロード",
+        sheetToScale: "生成したシートを画像スケーラーへ送る",
+        sheetToRename: "生成したシートをファイル名置換の元画像へ送る",
+        scaleTitle: "画像スケール + クリップボード",
+        scaleDesc: "ピクセルのエッジを保ったまま画像を2倍、3倍、4倍に拡大します。",
+        scaleDropHint: "ファイルのアップロードと Ctrl + V の貼り付けが使えます。",
+        scaleDownloadAll: "現在の倍率で個別ダウンロード",
+        scaleDownloadZip: "現在の倍率でZIPダウンロード",
+        scaleClear: "読み込んだ画像を削除",
+        paste: "Ctrl + V で画像を貼り付け",
+        scaleToRename: "現在の倍率の結果をファイル名置換の元画像へ送る",
+        renameTitle: "ファイル名置換",
+        renameDesc: "左側のファイル名の順番を基準に、右側の元画像を同じ名前で圧縮します。",
+        renameLeft: "1. 変更後のファイル名",
+        renameRight: "2. 元画像",
+        sort: "並び替え",
+        clear: "削除",
+        renameDrop: "ここにファイルをドラッグ、またはクリック",
+        matchCounts: "数を合わせてください",
+        bottomFooter: "統合画像ユーティリティはブラウザベースの無料画像作業ツールです。",
+        globalDrop: "ファイルを離すと、現在選択中のツールに取り込みます。",
+        cookieText: "このサイトの基本機能に必須Cookieは必要ありません。広告や分析ではCookieまたは類似技術を使用する場合があります。",
+        cookieAllow: "広告/分析Cookieを許可",
+        cookieEssential: "必須のみ",
+        save: "保存",
+        processing: "処理中...",
+        loadingPsd: "PSDファイルを解析中...",
+        loadingZip: "レイヤーをレンダリングしてZIPを作成中...",
+        loadingNames: "レイヤー名を更新中...",
+        psdReadError: "PSDファイルの読み込み中にエラーが発生しました。",
+        psdLibraryError: "PSDライブラリを読み込めませんでした。インターネット接続またはCDNブロックを確認してください。",
+        selectImages: "画像を選択してください。",
+        mixedSizeConfirm: "画像サイズが異なります。最初の画像サイズに合わせて描画しますか？",
+        loadedLayer: "読み込み完了: {name} / {count} レイヤー",
+        exportedLayer: "書き出し完了: {count} レイヤー",
+        refreshedLayer: "プレビュー更新: {count} レイヤー",
+        selectedImages: "{count} 枚の画像を選択済み",
+        receivedImages: "{count} 枚の画像を受信",
+        framesReady: "{count} フレーム準備完了",
+        compressFiles: "{count} ファイルを圧縮"
+      }
+    };
+
+    function detectLanguage() {
+      const saved = localStorage.getItem("imageUtilityLanguage");
+      if (saved && translations[saved]) {
+        return saved;
+      }
+
+      const languages = navigator.languages && navigator.languages.length > 0 ? navigator.languages : [navigator.language || "en"];
+      for (const language of languages) {
+        const code = language.toLowerCase();
+        if (code.startsWith("ko")) return "ko";
+        if (code.startsWith("ja")) return "ja";
+        if (code.startsWith("zh")) return "zh";
+        if (code.startsWith("en")) return "en";
+      }
+      return "en";
+    }
+
+    let currentLanguage = detectLanguage();
+
+    function t(key, values = {}) {
+      const source = translations[currentLanguage] || translations.en;
+      let text = source[key] || translations.en[key] || key;
+      Object.keys(values).forEach((name) => {
+        text = text.replaceAll("{" + name + "}", values[name]);
+      });
+      return text;
+    }
+
+    function setText(selector, key) {
+      const element = document.querySelector(selector);
+      if (element) {
+        element.textContent = t(key);
+      }
+    }
+
+    function setAllText(selector, key) {
+      document.querySelectorAll(selector).forEach((element) => {
+        element.textContent = t(key);
+      });
+    }
+
+    function updateGoogleTranslateLink() {
+      const link = document.getElementById("googleTranslateLink");
+      if (link) {
+        link.href = "https://translate.google.com/translate?sl=auto&tl=auto&u=" + encodeURIComponent(location.href);
+      }
+    }
+
+    function isDarkTheme() {
+      if (document.documentElement.dataset.theme) {
+        return document.documentElement.dataset.theme === "dark";
+      }
+      return window.matchMedia("(prefers-color-scheme: dark)").matches;
+    }
+
+    function updateThemeButton() {
+      const themeToggle = document.getElementById("themeToggle");
+      if (themeToggle) {
+        themeToggle.textContent = isDarkTheme() ? t("lightMode") : t("darkMode");
+      }
+    }
+
+    function applyLanguage() {
+      document.documentElement.lang = currentLanguage === "zh" ? "zh-CN" : currentLanguage;
+      document.title = t("pageTitle");
+      setText(".title h1", "appTitle");
+      setText(".title p", "appSubtitle");
+      setText("#languageLabel", "language");
+      setText("#googleTranslateLink", "googleTranslate");
+      setAllText('.site-nav a[href="./index.html"], .site-footer a[href="./index.html"]', "navTools");
+      setAllText('.site-nav a[href="./privacy.html"], .site-footer a[href="./privacy.html"]', "navPrivacy");
+      setAllText('.site-nav a[href="./terms.html"], .site-footer a[href="./terms.html"]', "navTerms");
+      setAllText('.site-nav a[href="./contact.html"], .site-footer a[href="./contact.html"]', "navContact");
+      setText(".privacy-note", "privacyNote");
+      setText('[data-tab="layerPanel"]', "tabLayer");
+      setText('[data-tab="sheetPanel"]', "tabSheet");
+      setText('[data-tab="scalePanel"]', "tabScale");
+      setText('[data-tab="renamePanel"]', "tabRename");
+      setText("#layerPanel .section-head h2", "layerTitle");
+      setText("#layerPanel .section-head p", "layerDesc");
+      setText("#layerDrop strong", "layerDropTitle");
+      setText("#layerDrop div", "layerDropHint");
+      const numberingLabel = document.querySelector("#layerPanel .check-row");
+      if (numberingLabel) {
+        numberingLabel.childNodes.forEach((node) => {
+          if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+            node.textContent = " " + t("numbering") + " ";
+          }
+        });
+      }
+      const bottomUpLabel = document.querySelector("#layerNumberingBottomUp")?.closest(".check-row");
+      if (bottomUpLabel) {
+        bottomUpLabel.childNodes.forEach((node) => {
+          if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+            node.textContent = " " + t("numberingBottomUp");
+          }
+        });
+      }
+      const helpTip = document.querySelector(".help-tip");
+      if (helpTip) helpTip.dataset.help = t("numberingHelp");
+      const layerStatus = document.getElementById("layerStatus");
+      if (layerStatus && layerStatus.dataset.state === "waiting") layerStatus.textContent = t("waiting");
+      setText("#layerExport", "layerExport");
+      setText("#layerClear", "layerClear");
+      setText("#layerToSheet", "layerToSheet");
+      setText("#layerToScale", "layerToScale");
+      setText("#layerToRename", "layerToRename");
+      setText("#sheetPanel .section-head h2", "sheetTitle");
+      setText("#sheetPanel .section-head p", "sheetDesc");
+      setText("#sheetDrop strong", "imageDropTitle");
+      setText("#sheetDrop div", "sheetDropHint");
+      setText("#sheetMake", "sheetMake");
+      setText("#sheetClear", "sheetClear");
+      setText("#sheetToScale", "sheetToScale");
+      setText("#sheetToRename", "sheetToRename");
+      setText("#scalePanel .section-head h2", "scaleTitle");
+      setText("#scalePanel .section-head p", "scaleDesc");
+      setText("#scaleDrop strong", "imageDropTitle");
+      setText("#scaleDrop div", "scaleDropHint");
+      setText("#scaleDownloadAll", "scaleDownloadAll");
+      setText("#scaleDownloadZip", "scaleDownloadZip");
+      setText("#scaleClear", "scaleClear");
+      setText("#scalePaste", "paste");
+      setText("#scaleToRename", "scaleToRename");
+      setText("#renamePanel .section-head h2", "renameTitle");
+      setText("#renamePanel .section-head p", "renameDesc");
+      setText("#renamePanel .rename-column:nth-child(1) .header-row span", "renameLeft");
+      setText("#renamePanel .rename-column:nth-child(2) .header-row span", "renameRight");
+      setAllText("[data-sort-list]", "sort");
+      setAllText("[data-clear-list]", "clear");
+      setText("#renameLeftDrop", "renameDrop");
+      setText("#renameRightDrop", "renameDrop");
+      const renameConvert = document.getElementById("renameConvert");
+      if (renameConvert && renameConvert.disabled) renameConvert.textContent = t("matchCounts");
+      setText(".site-footer div", "bottomFooter");
+      setText("#globalDropOverlay div", "globalDrop");
+      setText("#cookiePanel p", "cookieText");
+      const cookieLabel = document.querySelector("#cookiePanel .check-row");
+      if (cookieLabel) {
+        cookieLabel.childNodes.forEach((node) => {
+          if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+            node.textContent = " " + t("cookieAllow");
+          }
+        });
+      }
+      setText("#cookieEssential", "cookieEssential");
+      setText("#cookieSave", "save");
+      setText("#loadingText", "processing");
+      updateThemeButton();
+      updateGoogleTranslateLink();
+    }
+
+    (() => {
+      const root = document.documentElement;
+      const themeToggle = document.getElementById("themeToggle");
+      const languageSelect = document.getElementById("languageSelect");
+      const savedTheme = localStorage.getItem("imageUtilityTheme");
+
+      if (savedTheme === "dark" || savedTheme === "light") {
+        root.dataset.theme = savedTheme;
+      }
+
+      themeToggle.addEventListener("click", () => {
+        const nextTheme = isDarkTheme() ? "light" : "dark";
+        root.dataset.theme = nextTheme;
+        localStorage.setItem("imageUtilityTheme", nextTheme);
+        updateThemeButton();
+      });
+
+      languageSelect.value = currentLanguage;
+      languageSelect.addEventListener("change", () => {
+        currentLanguage = languageSelect.value;
+        localStorage.setItem("imageUtilityLanguage", currentLanguage);
+        applyLanguage();
+      });
+
+      applyLanguage();
+
+      window.showToolTab = (panelId) => {
+        document.querySelectorAll(".tab").forEach((item) => {
+          item.classList.toggle("active", item.dataset.tab === panelId);
+        });
+        document.querySelectorAll(".panel").forEach((panel) => {
+          panel.classList.toggle("active", panel.id === panelId);
+        });
+      };
+
+      document.querySelectorAll(".tab").forEach((tab) => {
+        tab.addEventListener("click", () => {
+          window.showToolTab(tab.dataset.tab);
+        });
+      });
+
+      const dropOverlay = document.getElementById("globalDropOverlay");
+      const cookiePanel = document.getElementById("cookiePanel");
+      const cookieCheckbox = document.getElementById("adCookieConsent");
+      const savedCookieConsent = localStorage.getItem("adCookieConsent");
+      let dragDepth = 0;
+
+      if (!savedCookieConsent) {
+        cookiePanel.classList.add("active");
+      } else {
+        cookieCheckbox.checked = savedCookieConsent === "accepted";
+      }
+
+      document.getElementById("cookieSave").addEventListener("click", () => {
+        localStorage.setItem("adCookieConsent", cookieCheckbox.checked ? "accepted" : "declined");
+        cookiePanel.classList.remove("active");
+      });
+
+      document.getElementById("cookieEssential").addEventListener("click", () => {
+        cookieCheckbox.checked = false;
+        localStorage.setItem("adCookieConsent", "declined");
+        cookiePanel.classList.remove("active");
+      });
+
+      function hasDraggedFiles(event) {
+        return event.dataTransfer && Array.from(event.dataTransfer.types).includes("Files");
+      }
+
+      function getActivePanelId() {
+        const activePanel = document.querySelector(".panel.active");
+        return activePanel ? activePanel.id : "layerPanel";
+      }
+
+      function acceptFilesForActiveTool(files) {
+        const activePanelId = getActivePanelId();
+        if (activePanelId === "layerPanel" && toolBridge.acceptLayerFiles) {
+          toolBridge.acceptLayerFiles(files);
+        } else if (activePanelId === "sheetPanel" && toolBridge.acceptSheetFiles) {
+          toolBridge.acceptSheetFiles(files);
+        } else if (activePanelId === "scalePanel" && toolBridge.acceptScaleFiles) {
+          toolBridge.acceptScaleFiles(files);
+        } else if (activePanelId === "renamePanel" && toolBridge.acceptRenameFiles) {
+          toolBridge.acceptRenameFiles(files);
+        }
+      }
+
+      window.addEventListener("dragenter", (event) => {
+        if (!hasDraggedFiles(event)) {
+          return;
+        }
+        event.preventDefault();
+        dragDepth += 1;
+        dropOverlay.classList.add("active");
+      }, true);
+
+      window.addEventListener("dragover", (event) => {
+        if (!hasDraggedFiles(event)) {
+          return;
+        }
+        event.preventDefault();
+      }, true);
+
+      window.addEventListener("dragleave", (event) => {
+        if (!hasDraggedFiles(event)) {
+          return;
+        }
+        dragDepth = Math.max(0, dragDepth - 1);
+        if (dragDepth === 0) {
+          dropOverlay.classList.remove("active");
+        }
+      }, true);
+
+      window.addEventListener("drop", (event) => {
+        if (!hasDraggedFiles(event)) {
+          return;
+        }
+        event.preventDefault();
+        dragDepth = 0;
+        dropOverlay.classList.remove("active");
+        if (event.target.closest && event.target.closest(".drop-zone")) {
+          return;
+        }
+        acceptFilesForActiveTool(event.dataTransfer.files);
+      }, true);
+    })();
+
+    const loadingOverlay = document.getElementById("loadingOverlay");
+    const loadingText = document.getElementById("loadingText");
+
+    function showLoading(text) {
+      loadingText.textContent = text;
+      loadingOverlay.classList.add("active");
+    }
+
+    function hideLoading() {
+      loadingOverlay.classList.remove("active");
+    }
+
+    function downloadBlob(blob, fileName) {
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = fileName;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+    }
+
+    function isImageFile(file) {
+      return file.type.startsWith("image/") || /\.(png|jpe?g|gif|webp|bmp|avif)$/i.test(file.name);
+    }
+
+    const toolBridge = {
+      layerImages: [],
+      sheetImages: [],
+      spriteSheet: null,
+      scaledImages: [],
+      toSheet: null,
+      toScale: null,
+      toRenameRight: null
+    };
+
+    function cloneRecords(records) {
+      return records.map((record) => ({
+        name: record.name,
+        blob: record.blob
+      }));
+    }
+
+    function filesToRecords(files) {
+      return Array.from(files).filter(isImageFile).map((file) => ({
+        name: file.name,
+        blob: file
+      }));
+    }
+
+    function loadRecordImage(record) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        const url = URL.createObjectURL(record.blob);
+        image.onload = () => {
+          URL.revokeObjectURL(url);
+          resolve(image);
+        };
+        image.onerror = () => {
+          URL.revokeObjectURL(url);
+          reject(new Error("이미지를 불러오지 못했습니다: " + record.name));
+        };
+        image.src = url;
+      });
+    }
+
+    function renderPreviewGrid(container, records) {
+      container.innerHTML = "";
+      records.forEach((record) => {
+        const item = document.createElement("div");
+        item.className = "preview-item";
+
+        const image = document.createElement("img");
+        image.className = "thumb";
+        image.style.width = "96px";
+        image.style.height = "96px";
+        image.style.objectFit = "contain";
+        const url = URL.createObjectURL(record.blob);
+        image.onload = () => URL.revokeObjectURL(url);
+        image.src = url;
+
+        const name = document.createElement("div");
+        name.className = "item-name";
+        name.textContent = record.name;
+        name.title = record.name;
+
+        item.appendChild(image);
+        item.appendChild(name);
+        container.appendChild(item);
+      });
+    }
+
+    function bindFileDropZone(drop, input, onFiles) {
+      drop.addEventListener("click", () => input.click());
+      input.addEventListener("change", (event) => onFiles(event.target.files));
+
+      ["dragenter", "dragover", "dragleave", "drop"].forEach((name) => {
+        drop.addEventListener(name, (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+        });
+      });
+
+      drop.addEventListener("dragover", () => drop.classList.add("drag-over"));
+      ["dragleave", "drop"].forEach((name) => {
+        drop.addEventListener(name, () => drop.classList.remove("drag-over"));
+      });
+
+      drop.addEventListener("drop", (event) => onFiles(event.dataTransfer.files));
+    }
+
+    (() => {
+      const drop = document.getElementById("layerDrop");
+      const input = document.getElementById("layerFile");
+      const exportButton = document.getElementById("layerExport");
+      const clearButton = document.getElementById("layerClear");
+      const preview = document.getElementById("layerPreview");
+      const transfers = document.getElementById("layerTransfers");
+      const toSheetButton = document.getElementById("layerToSheet");
+      const toScaleButton = document.getElementById("layerToScale");
+      const toRenameButton = document.getElementById("layerToRename");
+      const status = document.getElementById("layerStatus");
+      const numbering = document.getElementById("layerNumbering");
+      const numberingBottomUp = document.getElementById("layerNumberingBottomUp");
+      const numberingDirectionRow = document.getElementById("layerNumberingDirectionRow");
+      const PSDLib = window.PSD || (typeof require === "function" ? require("psd") : null);
+      let currentPsd = null;
+
+      drop.addEventListener("click", () => input.click());
+      input.addEventListener("change", (event) => handleFile(event.target.files[0]));
+
+      drop.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        drop.classList.add("drag-over");
+      });
+
+      drop.addEventListener("dragleave", () => drop.classList.remove("drag-over"));
+      drop.addEventListener("drop", (event) => {
+        event.preventDefault();
+        drop.classList.remove("drag-over");
+        handleFile(event.dataTransfer.files[0]);
+      });
+
+      async function handleFile(file) {
+        if (!file || !file.name.toLowerCase().endsWith(".psd")) {
+          return;
+        }
+
+        if (!PSDLib) {
+          alert(t("psdLibraryError"));
+          return;
+        }
+
+        showLoading(t("loadingPsd"));
+        try {
+          const buffer = await file.arrayBuffer();
+          currentPsd = new PSDLib(new Uint8Array(buffer));
+          currentPsd.parse();
+          toolBridge.layerImages = await buildLayerRecords();
+          renderPreviewGrid(preview, toolBridge.layerImages);
+          transfers.classList.toggle("active", toolBridge.layerImages.length > 0);
+          status.dataset.state = "loaded";
+          status.textContent = t("loadedLayer", { name: file.name, count: toolBridge.layerImages.length });
+          exportButton.disabled = false;
+        } catch (error) {
+          console.error(error);
+          alert(t("psdReadError"));
+        } finally {
+          hideLoading();
+        }
+      }
+
+      async function buildLayerRecords() {
+        const layerRecords = [];
+        const header = currentPsd.tree().export();
+        const width = header.document.width;
+        const height = header.document.height;
+        const layers = currentPsd.tree().descendants();
+
+        for (const layer of layers) {
+          if (layer.isGroup()) {
+            continue;
+          }
+
+          const layerData = layer.export();
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const context = canvas.getContext("2d");
+
+          try {
+            const pixelData = layer.layer.image.toPng();
+            const image = await new Promise((resolve, reject) => {
+              const img = new Image();
+              img.onload = () => resolve(img);
+              img.onerror = reject;
+              img.src = pixelData.src;
+            });
+
+            context.drawImage(image, layerData.left, layerData.top);
+            const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+            const fileName = layerData.name.replace(/[\/\\?%*:|"<>]/g, "-");
+            layerRecords.push({
+              baseName: fileName,
+              blob: blob
+            });
+          } catch (error) {
+            console.warn("이미지 데이터가 없는 레이어를 건너뜁니다:", layerData.name);
+          }
+        }
+
+        return layerRecords.map((record, index) => {
+          let fileName = record.baseName;
+          if (numbering.checked) {
+            const number = numberingBottomUp.checked ? layerRecords.length - index : index + 1;
+            fileName = number + "." + fileName;
+          }
+
+          return {
+            name: fileName + ".png",
+            blob: record.blob
+          };
+        });
+      }
+
+      exportButton.addEventListener("click", async () => {
+        if (!currentPsd) {
+          return;
+        }
+
+        showLoading(t("loadingZip"));
+        try {
+          const zip = new JSZip();
+          if (toolBridge.layerImages.length === 0) {
+            toolBridge.layerImages = await buildLayerRecords();
+            renderPreviewGrid(preview, toolBridge.layerImages);
+          }
+
+          for (const record of toolBridge.layerImages) {
+            zip.file(record.name, record.blob);
+          }
+
+          const content = await zip.generateAsync({ type: "blob" });
+          downloadBlob(content, "psd_layers.zip");
+          transfers.classList.toggle("active", toolBridge.layerImages.length > 0);
+          status.dataset.state = "exported";
+          status.textContent = t("exportedLayer", { count: toolBridge.layerImages.length });
+        } catch (error) {
+          console.error(error);
+          alert(t("psdReadError"));
+        } finally {
+          hideLoading();
+        }
+      });
+
+      clearButton.addEventListener("click", () => {
+        currentPsd = null;
+        input.value = "";
+        toolBridge.layerImages = [];
+        preview.innerHTML = "";
+        transfers.classList.remove("active");
+        exportButton.disabled = true;
+        status.dataset.state = "waiting";
+        status.textContent = t("waiting");
+      });
+
+      numbering.addEventListener("change", async () => {
+        numberingDirectionRow.hidden = !numbering.checked;
+        if (!numbering.checked) {
+          numberingBottomUp.checked = false;
+        }
+
+        if (!currentPsd) {
+          return;
+        }
+
+        showLoading(t("loadingNames"));
+        try {
+          toolBridge.layerImages = await buildLayerRecords();
+          renderPreviewGrid(preview, toolBridge.layerImages);
+          status.dataset.state = "refreshed";
+          status.textContent = t("refreshedLayer", { count: toolBridge.layerImages.length });
+        } finally {
+          hideLoading();
+        }
+      });
+
+      numberingBottomUp.addEventListener("change", async () => {
+        if (!currentPsd || !numbering.checked) {
+          return;
+        }
+
+        showLoading(t("loadingNames"));
+        try {
+          toolBridge.layerImages = await buildLayerRecords();
+          renderPreviewGrid(preview, toolBridge.layerImages);
+          status.dataset.state = "refreshed";
+          status.textContent = t("refreshedLayer", { count: toolBridge.layerImages.length });
+        } finally {
+          hideLoading();
+        }
+      });
+
+      toolBridge.acceptLayerFiles = (files) => {
+        const psdFile = Array.from(files).find((file) => file.name.toLowerCase().endsWith(".psd"));
+        if (psdFile) {
+          handleFile(psdFile);
+          window.showToolTab("layerPanel");
+        }
+      };
+
+      toSheetButton.addEventListener("click", () => {
+        if (toolBridge.toSheet) {
+          toolBridge.toSheet(cloneRecords(toolBridge.layerImages));
+          window.showToolTab("sheetPanel");
+        }
+      });
+
+      toScaleButton.addEventListener("click", () => {
+        if (toolBridge.toScale) {
+          toolBridge.toScale(cloneRecords(toolBridge.layerImages));
+          window.showToolTab("scalePanel");
+        }
+      });
+
+      toRenameButton.addEventListener("click", () => {
+        if (toolBridge.toRenameRight) {
+          toolBridge.toRenameRight(cloneRecords(toolBridge.layerImages));
+          window.showToolTab("renamePanel");
+        }
+      });
+    })();
+
+    (() => {
+      const drop = document.getElementById("sheetDrop");
+      const fileInput = document.getElementById("sheetFiles");
+      const makeButton = document.getElementById("sheetMake");
+      const clearButton = document.getElementById("sheetClear");
+      const frameList = document.getElementById("sheetFrameList");
+      const output = document.getElementById("sheetOutput");
+      const transfers = document.getElementById("sheetTransfers");
+      const toScaleButton = document.getElementById("sheetToScale");
+      const toRenameButton = document.getElementById("sheetToRename");
+      let sheetRecords = [];
+
+      bindFileDropZone(drop, fileInput, (files) => {
+        setSheetRecords(filesToRecords(files), "selectedImages");
+      });
+
+      if (window.Sortable) {
+        new Sortable(frameList, {
+          animation: 150,
+          handle: ".drag-handle",
+          onSort: syncRecordsFromList
+        });
+      }
+
+      function setSheetRecords(records, messageKey) {
+        sheetRecords = records;
+        toolBridge.sheetImages = cloneRecords(records);
+        toolBridge.spriteSheet = null;
+        transfers.classList.remove("active");
+        output.textContent = records.length > 0 ? t(messageKey, { count: records.length }) : "";
+        renderFrameList();
+      }
+
+      function renderFrameList() {
+        frameList.innerHTML = "";
+        sheetRecords.forEach((record) => {
+          const item = document.createElement("li");
+          item.className = "file-item";
+          item.record = record;
+
+          const handle = document.createElement("span");
+          handle.className = "drag-handle";
+          handle.textContent = "↕";
+
+          const image = document.createElement("img");
+          image.className = "thumb";
+          const url = URL.createObjectURL(record.blob);
+          image.onload = () => URL.revokeObjectURL(url);
+          image.src = url;
+
+          const info = document.createElement("div");
+          info.className = "file-info";
+          info.textContent = record.name;
+          info.title = record.name;
+
+          const removeButton = document.createElement("button");
+          removeButton.type = "button";
+          removeButton.className = "remove-btn";
+          removeButton.innerHTML = "&times;";
+          removeButton.addEventListener("click", () => {
+            item.remove();
+            syncRecordsFromList();
+          });
+
+          item.appendChild(handle);
+          item.appendChild(image);
+          item.appendChild(info);
+          item.appendChild(removeButton);
+          frameList.appendChild(item);
+        });
+      }
+
+      function syncRecordsFromList() {
+        sheetRecords = Array.from(frameList.children).map((item) => item.record);
+        toolBridge.sheetImages = cloneRecords(sheetRecords);
+        toolBridge.spriteSheet = null;
+        transfers.classList.remove("active");
+        output.textContent = sheetRecords.length > 0 ? t("framesReady", { count: sheetRecords.length }) : "";
+      }
+
+      toolBridge.toSheet = (records) => {
+        setSheetRecords(records, "receivedImages");
+      };
+
+      toolBridge.acceptSheetFiles = (files) => {
+        setSheetRecords(filesToRecords(files), "receivedImages");
+        window.showToolTab("sheetPanel");
+      };
+
+      makeButton.addEventListener("click", async () => {
+        const records = sheetRecords.length > 0 ? sheetRecords : filesToRecords(fileInput.files);
+        if (records.length === 0) {
+          alert(t("selectImages"));
+          return;
+        }
+
+        const images = await Promise.all(records.map(loadRecordImage));
+
+        const width = images[0].width;
+        const height = images[0].height;
+        const differentSize = images.some((image) => image.width !== width || image.height !== height);
+        if (differentSize && !confirm(t("mixedSizeConfirm"))) {
+          return;
+        }
+
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+        canvas.width = width * images.length;
+        canvas.height = height;
+
+        images.forEach((image, index) => {
+          context.drawImage(image, width * index, 0, width, height);
+        });
+
+        output.innerHTML = "";
+        output.appendChild(canvas);
+
+        const link = document.createElement("a");
+        link.download = "spritesheet.png";
+        link.href = canvas.toDataURL("image/png");
+        link.textContent = t("sheetDownload");
+        link.style.display = "inline-block";
+        link.style.marginTop = "12px";
+        output.appendChild(document.createElement("br"));
+        output.appendChild(link);
+
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+        toolBridge.spriteSheet = {
+          name: "spritesheet.png",
+          blob: blob
+        };
+        transfers.classList.add("active");
+      });
+
+      clearButton.addEventListener("click", () => {
+        sheetRecords = [];
+        toolBridge.sheetImages = [];
+        toolBridge.spriteSheet = null;
+        fileInput.value = "";
+        frameList.innerHTML = "";
+        output.innerHTML = "";
+        transfers.classList.remove("active");
+      });
+
+      toScaleButton.addEventListener("click", () => {
+        if (toolBridge.toScale && toolBridge.spriteSheet) {
+          toolBridge.toScale([toolBridge.spriteSheet]);
+          window.showToolTab("scalePanel");
+        }
+      });
+
+      toRenameButton.addEventListener("click", () => {
+        if (toolBridge.toRenameRight && toolBridge.spriteSheet) {
+          toolBridge.toRenameRight([toolBridge.spriteSheet]);
+          window.showToolTab("renamePanel");
+        }
+      });
+    })();
+
+    (() => {
+      const drop = document.getElementById("scaleDrop");
+      const fileInput = document.getElementById("scaleFiles");
+      const preview = document.getElementById("scalePreview");
+      const scaleButtons = document.querySelectorAll(".scale-buttons [data-scale]");
+      const downloadAllButton = document.getElementById("scaleDownloadAll");
+      const downloadZipButton = document.getElementById("scaleDownloadZip");
+      const clearButton = document.getElementById("scaleClear");
+      const transfers = document.getElementById("scaleTransfers");
+      const toRenameButton = document.getElementById("scaleToRename");
+      let images = [];
+      let count = 1;
+      let currentScale = 2;
+
+      scaleButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          currentScale = Number(button.dataset.scale);
+          scaleButtons.forEach((item) => item.classList.remove("active"));
+          button.classList.add("active");
+        });
+      });
+
+      bindFileDropZone(drop, fileInput, (files) => {
+        addRecords(filesToRecords(files));
+      });
+
+      document.addEventListener("paste", (event) => {
+        const items = event.clipboardData ? event.clipboardData.items : [];
+        for (let index = 0; index < items.length; index += 1) {
+          if (items[index].type.indexOf("image") !== -1) {
+            addImage(items[index].getAsFile());
+          }
+        }
+      });
+
+      function addImage(file) {
+        if (!file) {
+          return;
+        }
+
+        addRecords([{
+          name: file.name || "image_" + count + ".png",
+          blob: file
+        }]);
+      }
+
+      function addRecords(records) {
+        records.forEach((record) => addRecord(record));
+      }
+
+      function addRecord(record) {
+        const image = new Image();
+        image.onload = () => {
+          const id = images.length;
+          images.push({
+            img: image,
+            blob: record.blob,
+            name: record.name || "image_" + count + ".png"
+          });
+          createItem(image, id);
+          toolBridge.scaledImages = [];
+          transfers.classList.add("active");
+          count += 1;
+        };
+        image.src = URL.createObjectURL(record.blob);
+      }
+
+      toolBridge.toScale = (records) => {
+        addRecords(records);
+      };
+
+      toolBridge.acceptScaleFiles = (files) => {
+        addRecords(filesToRecords(files));
+        window.showToolTab("scalePanel");
+      };
+
+      function createItem(image, id) {
+        const item = document.createElement("div");
+        item.className = "preview-item";
+
+        const canvas = document.createElement("canvas");
+        canvas.width = image.width;
+        canvas.height = image.height;
+        const context = canvas.getContext("2d");
+        context.imageSmoothingEnabled = false;
+        context.drawImage(image, 0, 0);
+
+        const nameInput = document.createElement("input");
+        nameInput.type = "text";
+        nameInput.value = images[id].name;
+        nameInput.addEventListener("input", () => {
+          images[id].name = nameInput.value;
+        });
+
+        const buttonWrap = document.createElement("div");
+        buttonWrap.style.marginTop = "8px";
+        [2, 3, 4].forEach((scale) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.textContent = "x" + scale;
+          button.addEventListener("click", () => downloadOne(id, scale));
+          buttonWrap.appendChild(button);
+        });
+
+        item.appendChild(canvas);
+        item.appendChild(nameInput);
+        item.appendChild(buttonWrap);
+        preview.appendChild(item);
+      }
+
+      function makeScaledBlob(data, scale) {
+        return new Promise((resolve) => {
+          const canvas = document.createElement("canvas");
+          canvas.width = data.img.width * scale;
+          canvas.height = data.img.height * scale;
+          const context = canvas.getContext("2d");
+          context.imageSmoothingEnabled = false;
+          context.drawImage(
+            data.img,
+            0, 0, data.img.width, data.img.height,
+            0, 0, data.img.width * scale, data.img.height * scale
+          );
+          canvas.toBlob(resolve, "image/png");
+        });
+      }
+
+      async function downloadOne(index, scale) {
+        const blob = await makeScaledBlob(images[index], scale);
+        downloadBlob(blob, images[index].name);
+      }
+
+      downloadAllButton.addEventListener("click", async () => {
+        const scaledRecords = [];
+        for (const data of images) {
+          const blob = await makeScaledBlob(data, currentScale);
+          scaledRecords.push({
+            name: data.name,
+            blob: blob
+          });
+          downloadBlob(blob, data.name);
+        }
+        toolBridge.scaledImages = scaledRecords;
+        transfers.classList.toggle("active", scaledRecords.length > 0);
+      });
+
+      downloadZipButton.addEventListener("click", async () => {
+        const zip = new JSZip();
+        const scaledRecords = [];
+        for (const data of images) {
+          const blob = await makeScaledBlob(data, currentScale);
+          scaledRecords.push({
+            name: data.name,
+            blob: blob
+          });
+          zip.file(data.name, blob);
+        }
+        toolBridge.scaledImages = scaledRecords;
+        const content = await zip.generateAsync({ type: "blob" });
+        downloadBlob(content, "scaled_images_x" + currentScale + ".zip");
+        transfers.classList.toggle("active", scaledRecords.length > 0);
+      });
+
+      toRenameButton.addEventListener("click", async () => {
+        if (!toolBridge.toRenameRight) {
+          return;
+        }
+
+        if (toolBridge.scaledImages.length === 0) {
+          const scaledRecords = [];
+          for (const data of images) {
+            const blob = await makeScaledBlob(data, currentScale);
+            scaledRecords.push({
+              name: data.name,
+              blob: blob
+            });
+          }
+          toolBridge.scaledImages = scaledRecords;
+        }
+
+        toolBridge.toRenameRight(cloneRecords(toolBridge.scaledImages));
+        window.showToolTab("renamePanel");
+      });
+
+      clearButton.addEventListener("click", () => {
+        images = [];
+        count = 1;
+        toolBridge.scaledImages = [];
+        fileInput.value = "";
+        preview.innerHTML = "";
+        transfers.classList.remove("active");
+      });
+    })();
+
+    (() => {
+      const convertButton = document.getElementById("renameConvert");
+
+      if (window.Sortable) {
+        new Sortable(document.getElementById("renameLeftList"), { animation: 150, onSort: checkStatus });
+        new Sortable(document.getElementById("renameRightList"), { animation: 150, onSort: checkStatus });
+      }
+
+      initDropZone("renameLeftDrop", "renameLeftInput", "renameLeftList");
+      initDropZone("renameRightDrop", "renameRightInput", "renameRightList");
+
+      toolBridge.toRenameRight = (records) => {
+        handleRecords(records, "renameRightList");
+      };
+
+      toolBridge.acceptRenameFiles = (files) => {
+        handleRecords(Array.from(files).map((file) => ({
+          name: file.name,
+          blob: file
+        })), "renameRightList");
+        window.showToolTab("renamePanel");
+      };
+
+      document.querySelectorAll("[data-sort-list]").forEach((button) => {
+        button.addEventListener("click", () => sortList(button.dataset.sortList));
+      });
+
+      document.querySelectorAll("[data-clear-list]").forEach((button) => {
+        button.addEventListener("click", () => {
+          document.getElementById(button.dataset.clearList).innerHTML = "";
+          checkStatus();
+        });
+      });
+
+      function initDropZone(dropId, inputId, listId) {
+        const drop = document.getElementById(dropId);
+        const input = document.getElementById(inputId);
+
+        drop.addEventListener("click", () => input.click());
+        input.addEventListener("change", (event) => handleFiles(event.target.files, listId));
+
+        ["dragenter", "dragover", "dragleave", "drop"].forEach((name) => {
+          drop.addEventListener(name, (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+          });
+        });
+
+        drop.addEventListener("dragover", () => drop.classList.add("drag-over"));
+        ["dragleave", "drop"].forEach((name) => {
+          drop.addEventListener(name, () => drop.classList.remove("drag-over"));
+        });
+
+        drop.addEventListener("drop", (event) => handleFiles(event.dataTransfer.files, listId));
+      }
+
+      function handleFiles(files, listId) {
+        handleRecords(Array.from(files).map((file) => ({
+          name: file.name,
+          blob: file
+        })), listId);
+      }
+
+      function handleRecords(records, listId) {
+        const list = document.getElementById(listId);
+        records.forEach((record) => {
+          const item = document.createElement("li");
+          item.className = "file-item";
+          item.fileObj = record.blob;
+
+          const image = document.createElement("img");
+          image.className = "thumb";
+          if (/\.(jpe?g|png|gif|webp|bmp|avif)$/i.test(record.name)) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              image.src = event.target.result;
+            };
+            reader.readAsDataURL(record.blob);
+          }
+
+          const info = document.createElement("div");
+          info.className = "file-info";
+          info.textContent = record.name;
+
+          const removeButton = document.createElement("button");
+          removeButton.type = "button";
+          removeButton.className = "remove-btn";
+          removeButton.innerHTML = "&times;";
+          removeButton.addEventListener("click", () => {
+            item.remove();
+            checkStatus();
+          });
+
+          item.appendChild(image);
+          item.appendChild(info);
+          item.appendChild(removeButton);
+          list.appendChild(item);
+        });
+        checkStatus();
+      }
+
+      function sortList(listId) {
+        const list = document.getElementById(listId);
+        const items = Array.from(list.children);
+        items.sort((a, b) => a.querySelector(".file-info").textContent.localeCompare(
+          b.querySelector(".file-info").textContent,
+          undefined,
+          { numeric: true }
+        ));
+        items.forEach((item) => list.appendChild(item));
+        checkStatus();
+      }
+
+      function checkStatus() {
+        const leftCount = document.getElementById("renameLeftList").children.length;
+        const rightCount = document.getElementById("renameRightList").children.length;
+        const isReady = leftCount > 0 && leftCount === rightCount;
+        convertButton.disabled = !isReady;
+        convertButton.textContent = isReady ? t("compressFiles", { count: leftCount }) : t("matchCounts");
+      }
+
+      convertButton.addEventListener("click", async () => {
+        const zip = new JSZip();
+        const leftItems = document.getElementById("renameLeftList").children;
+        const rightItems = document.getElementById("renameRightList").children;
+
+        for (let index = 0; index < leftItems.length; index += 1) {
+          zip.file(leftItems[index].querySelector(".file-info").textContent, rightItems[index].fileObj);
+        }
+
+        const content = await zip.generateAsync({ type: "blob" });
+        downloadBlob(content, "sprites.zip");
+      });
+    })();
+  </script>
+</body>
+</html>
