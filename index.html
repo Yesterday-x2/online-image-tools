@@ -642,6 +642,62 @@
       font-size: 13px;
     }
 
+    .option-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 10px;
+      margin: 14px 0;
+    }
+
+    .option-grid label, .inline-control {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .option-grid input, .option-grid select, .inline-control input, .inline-control select {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--text);
+      padding: 8px;
+      min-height: 36px;
+    }
+
+    .inline-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin: 10px 0;
+    }
+
+    .inline-options label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .animation-preview {
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel-2);
+      padding: 14px;
+      text-align: center;
+    }
+
+    .animation-preview canvas {
+      display: block;
+      margin: 10px auto;
+      max-width: min(100%, 420px);
+      image-rendering: pixelated;
+    }
+
     @media (max-width: 820px) {
       .topbar {
         align-items: flex-start;
@@ -765,6 +821,45 @@
         <button class="primary-btn" id="sheetMake" type="button">스프라이트 시트 만들기</button>
         <button type="button" id="sheetClear">불러온 프레임 삭제</button>
       </div>
+      <div class="option-grid">
+        <label>
+          <span id="sheetSortLabel">프레임 정렬</span>
+          <select id="sheetSortMode">
+            <option value="current">현재 순서 유지</option>
+            <option value="nameAsc">이름순 A-Z</option>
+            <option value="nameDesc">이름순 Z-A</option>
+            <option value="reverse">현재 순서 반전</option>
+          </select>
+        </label>
+        <label>
+          <span id="sheetColumnsLabel">열 수</span>
+          <input type="number" id="sheetColumns" min="1" value="8">
+        </label>
+        <label>
+          <span id="sheetPaddingLabel">바깥 여백</span>
+          <input type="number" id="sheetPadding" min="0" value="0">
+        </label>
+        <label>
+          <span id="sheetSpacingLabel">프레임 간격</span>
+          <input type="number" id="sheetSpacing" min="0" value="0">
+        </label>
+      </div>
+      <div class="inline-options">
+        <label><input type="checkbox" id="sheetCropCommon"> <span id="sheetCropCommonLabel">투명 영역 공통 크롭</span></label>
+        <label><input type="checkbox" id="sheetMetadata"> <span id="sheetMetadataLabel">JSON 메타데이터 함께 다운로드</span></label>
+        <button type="button" id="sheetApplySort">정렬 적용</button>
+      </div>
+      <div class="animation-preview">
+        <strong id="animationPreviewTitle">애니메이션 미리보기</strong>
+        <canvas id="animationCanvas" width="160" height="160"></canvas>
+        <div class="inline-options" style="justify-content:center;">
+          <label><span id="animationFpsLabel">FPS</span><input type="number" id="animationFps" min="1" max="60" value="12" style="width:80px;"></label>
+          <label><span id="previewBgLabel">배경색</span><input type="color" id="previewBgColor" value="#202020"></label>
+          <label><input type="checkbox" id="previewChecker" checked> <span id="previewCheckerLabel">체크무늬 배경</span></label>
+          <button type="button" id="animationPlay">재생</button>
+          <button type="button" id="animationStop">정지</button>
+        </div>
+      </div>
       <ul class="file-list" id="sheetFrameList"></ul>
       <div class="output" id="sheetOutput"></div>
       <div class="transfer-actions" id="sheetTransfers">
@@ -785,9 +880,18 @@
           <div style="margin-top:8px;color:var(--muted);font-size:13px;">파일 업로드와 Ctrl + V 붙여넣기를 모두 사용할 수 있습니다.</div>
         </div>
         <div class="tool-row scale-buttons" style="justify-content:center;">
+          <button type="button" data-scale="1">x1</button>
           <button type="button" data-scale="2" class="active">x2</button>
           <button type="button" data-scale="3">x3</button>
           <button type="button" data-scale="4">x4</button>
+          <label class="inline-control" style="flex-direction:row;align-items:center;">
+            <span id="scaleFormatLabel">출력 형식</span>
+            <select id="scaleFormat">
+              <option value="image/png">PNG</option>
+              <option value="image/webp">WebP</option>
+              <option value="image/jpeg">JPEG</option>
+            </select>
+          </label>
           <button type="button" id="scaleDownloadAll">현재 배율로 각각 다운로드</button>
           <button type="button" id="scaleDownloadZip">현재 배율로 ZIP 다운로드</button>
           <button type="button" id="scaleClear">불러온 이미지 비우기</button>
@@ -830,6 +934,25 @@
           <input type="file" id="renameRightInput" multiple hidden>
           <ul class="file-list" id="renameRightList"></ul>
         </div>
+      </div>
+      <div class="option-grid">
+        <label>
+          <span id="namePatternLabel">파일명 패턴</span>
+          <input type="text" id="namePattern" value="frame_{num}.png">
+        </label>
+        <label>
+          <span id="nameStartLabel">시작 번호</span>
+          <input type="number" id="nameStart" value="1">
+        </label>
+        <label>
+          <span id="nameDigitsLabel">번호 자리수</span>
+          <input type="number" id="nameDigits" min="1" value="3">
+        </label>
+      </div>
+      <div class="inline-options">
+        <button type="button" id="generateNames">패턴으로 왼쪽 파일명 생성</button>
+        <button type="button" id="savePreset">현재 설정 저장</button>
+        <button type="button" id="loadPreset">저장한 설정 불러오기</button>
       </div>
       <div class="center-actions">
         <button class="primary-btn" id="renameConvert" type="button" disabled>개수를 맞춰주세요</button>
@@ -912,6 +1035,23 @@
         sheetDropHint: "선택한 순서대로 가로 스프라이트 시트를 만듭니다.",
         sheetMake: "스프라이트 시트 만들기",
         sheetClear: "불러온 프레임 삭제",
+        sheetSort: "프레임 정렬",
+        sheetColumns: "열 수",
+        sheetPadding: "바깥 여백",
+        sheetSpacing: "프레임 간격",
+        sheetCropCommon: "투명 영역 공통 크롭",
+        sheetMetadata: "JSON 메타데이터 함께 다운로드",
+        sheetApplySort: "정렬 적용",
+        sortCurrent: "현재 순서 유지",
+        sortNameAsc: "이름순 A-Z",
+        sortNameDesc: "이름순 Z-A",
+        sortReverse: "현재 순서 반전",
+        animationPreview: "애니메이션 미리보기",
+        animationFps: "FPS",
+        previewBg: "배경색",
+        previewChecker: "체크무늬 배경",
+        play: "재생",
+        stop: "정지",
         sheetDownload: "스프라이트 시트 다운로드",
         sheetToScale: "생성된 시트를 이미지 스케일러로 보내기",
         sheetToRename: "생성된 시트를 파일명 교체기 원본에 넣기",
@@ -920,6 +1060,7 @@
         scaleDropHint: "파일 업로드와 Ctrl + V 붙여넣기를 모두 사용할 수 있습니다.",
         scaleDownloadAll: "현재 배율로 각각 다운로드",
         scaleDownloadZip: "현재 배율로 ZIP 다운로드",
+        scaleFormat: "출력 형식",
         scaleClear: "불러온 이미지 비우기",
         paste: "Ctrl + V 로 이미지 붙여넣기",
         scaleToRename: "현재 배율 결과를 파일명 교체기 원본에 넣기",
@@ -929,6 +1070,12 @@
         renameRight: "2. 원본 이미지",
         sort: "정렬",
         clear: "삭제",
+        namePattern: "파일명 패턴",
+        nameStart: "시작 번호",
+        nameDigits: "번호 자리수",
+        generateNames: "패턴으로 왼쪽 파일명 생성",
+        savePreset: "현재 설정 저장",
+        loadPreset: "저장한 설정 불러오기",
         renameDrop: "여기에 파일을 드래그하거나 클릭",
         matchCounts: "개수를 맞춰주세요",
         bottomFooter: "통합 이미지 유틸리티는 브라우저 기반 무료 이미지 작업 도구입니다.",
@@ -989,6 +1136,23 @@
         sheetDropHint: "A horizontal sprite sheet is created in the selected order.",
         sheetMake: "Create Sprite Sheet",
         sheetClear: "Clear loaded frames",
+        sheetSort: "Frame sort",
+        sheetColumns: "Columns",
+        sheetPadding: "Outer padding",
+        sheetSpacing: "Frame spacing",
+        sheetCropCommon: "Common transparent crop",
+        sheetMetadata: "Download JSON metadata",
+        sheetApplySort: "Apply sort",
+        sortCurrent: "Keep current order",
+        sortNameAsc: "Name A-Z",
+        sortNameDesc: "Name Z-A",
+        sortReverse: "Reverse current order",
+        animationPreview: "Animation preview",
+        animationFps: "FPS",
+        previewBg: "Background color",
+        previewChecker: "Checker background",
+        play: "Play",
+        stop: "Stop",
         sheetDownload: "Download sprite sheet",
         sheetToScale: "Send generated sheet to Image Scaler",
         sheetToRename: "Send generated sheet to Rename originals",
@@ -997,6 +1161,7 @@
         scaleDropHint: "You can upload files or paste images with Ctrl + V.",
         scaleDownloadAll: "Download each at current scale",
         scaleDownloadZip: "Download ZIP at current scale",
+        scaleFormat: "Output format",
         scaleClear: "Clear loaded images",
         paste: "Paste images with Ctrl + V",
         scaleToRename: "Send current-scale output to Rename originals",
@@ -1006,6 +1171,12 @@
         renameRight: "2. Original images",
         sort: "Sort",
         clear: "Clear",
+        namePattern: "File name pattern",
+        nameStart: "Start number",
+        nameDigits: "Number digits",
+        generateNames: "Generate left names from pattern",
+        savePreset: "Save current settings",
+        loadPreset: "Load saved settings",
         renameDrop: "Drag files here or click",
         matchCounts: "Match the counts",
         bottomFooter: "Integrated Image Utility is a free browser-based image workflow tool.",
@@ -1066,6 +1237,23 @@
         sheetDropHint: "会按选择顺序生成横向精灵图。",
         sheetMake: "生成精灵图",
         sheetClear: "清除已载入帧",
+        sheetSort: "帧排序",
+        sheetColumns: "列数",
+        sheetPadding: "外边距",
+        sheetSpacing: "帧间距",
+        sheetCropCommon: "透明区域统一裁剪",
+        sheetMetadata: "同时下载 JSON 元数据",
+        sheetApplySort: "应用排序",
+        sortCurrent: "保持当前顺序",
+        sortNameAsc: "名称 A-Z",
+        sortNameDesc: "名称 Z-A",
+        sortReverse: "反转当前顺序",
+        animationPreview: "动画预览",
+        animationFps: "FPS",
+        previewBg: "背景色",
+        previewChecker: "棋盘格背景",
+        play: "播放",
+        stop: "停止",
         sheetDownload: "下载精灵图",
         sheetToScale: "将生成的精灵图发送到图像缩放",
         sheetToRename: "将生成的精灵图发送到文件名替换原图",
@@ -1074,6 +1262,7 @@
         scaleDropHint: "可以上传文件，也可以用 Ctrl + V 粘贴图片。",
         scaleDownloadAll: "按当前倍率分别下载",
         scaleDownloadZip: "按当前倍率下载 ZIP",
+        scaleFormat: "输出格式",
         scaleClear: "清除已载入图片",
         paste: "用 Ctrl + V 粘贴图片",
         scaleToRename: "将当前倍率结果发送到文件名替换原图",
@@ -1083,6 +1272,12 @@
         renameRight: "2. 原始图片",
         sort: "排序",
         clear: "清除",
+        namePattern: "文件名模式",
+        nameStart: "起始编号",
+        nameDigits: "编号位数",
+        generateNames: "按模式生成左侧文件名",
+        savePreset: "保存当前设置",
+        loadPreset: "加载已保存设置",
         renameDrop: "拖入文件或点击",
         matchCounts: "请匹配数量",
         bottomFooter: "综合图像工具是一个免费的浏览器图像工作流工具。",
@@ -1143,6 +1338,23 @@
         sheetDropHint: "選択した順番で横長のスプライトシートを作成します。",
         sheetMake: "スプライトシートを作成",
         sheetClear: "読み込んだフレームを削除",
+        sheetSort: "フレーム並び替え",
+        sheetColumns: "列数",
+        sheetPadding: "外側余白",
+        sheetSpacing: "フレーム間隔",
+        sheetCropCommon: "透明領域を共通クロップ",
+        sheetMetadata: "JSONメタデータもダウンロード",
+        sheetApplySort: "並び替えを適用",
+        sortCurrent: "現在の順序を維持",
+        sortNameAsc: "名前 A-Z",
+        sortNameDesc: "名前 Z-A",
+        sortReverse: "現在の順序を反転",
+        animationPreview: "アニメーションプレビュー",
+        animationFps: "FPS",
+        previewBg: "背景色",
+        previewChecker: "チェック柄背景",
+        play: "再生",
+        stop: "停止",
         sheetDownload: "スプライトシートをダウンロード",
         sheetToScale: "生成したシートを画像スケーラーへ送る",
         sheetToRename: "生成したシートをファイル名置換の元画像へ送る",
@@ -1151,6 +1363,7 @@
         scaleDropHint: "ファイルのアップロードと Ctrl + V の貼り付けが使えます。",
         scaleDownloadAll: "現在の倍率で個別ダウンロード",
         scaleDownloadZip: "現在の倍率でZIPダウンロード",
+        scaleFormat: "出力形式",
         scaleClear: "読み込んだ画像を削除",
         paste: "Ctrl + V で画像を貼り付け",
         scaleToRename: "現在の倍率の結果をファイル名置換の元画像へ送る",
@@ -1160,6 +1373,12 @@
         renameRight: "2. 元画像",
         sort: "並び替え",
         clear: "削除",
+        namePattern: "ファイル名パターン",
+        nameStart: "開始番号",
+        nameDigits: "番号桁数",
+        generateNames: "パターンで左の名前を生成",
+        savePreset: "現在の設定を保存",
+        loadPreset: "保存した設定を読み込み",
         renameDrop: "ここにファイルをドラッグ、またはクリック",
         matchCounts: "数を合わせてください",
         bottomFooter: "統合画像ユーティリティはブラウザベースの無料画像作業ツールです。",
@@ -1299,6 +1518,23 @@
       setText("#sheetDrop div", "sheetDropHint");
       setText("#sheetMake", "sheetMake");
       setText("#sheetClear", "sheetClear");
+      setText("#sheetSortLabel", "sheetSort");
+      setText("#sheetColumnsLabel", "sheetColumns");
+      setText("#sheetPaddingLabel", "sheetPadding");
+      setText("#sheetSpacingLabel", "sheetSpacing");
+      setText("#sheetCropCommonLabel", "sheetCropCommon");
+      setText("#sheetMetadataLabel", "sheetMetadata");
+      setText("#sheetApplySort", "sheetApplySort");
+      setText('#sheetSortMode option[value="current"]', "sortCurrent");
+      setText('#sheetSortMode option[value="nameAsc"]', "sortNameAsc");
+      setText('#sheetSortMode option[value="nameDesc"]', "sortNameDesc");
+      setText('#sheetSortMode option[value="reverse"]', "sortReverse");
+      setText("#animationPreviewTitle", "animationPreview");
+      setText("#animationFpsLabel", "animationFps");
+      setText("#previewBgLabel", "previewBg");
+      setText("#previewCheckerLabel", "previewChecker");
+      setText("#animationPlay", "play");
+      setText("#animationStop", "stop");
       setText("#sheetToScale", "sheetToScale");
       setText("#sheetToRename", "sheetToRename");
       setText("#scalePanel .section-head h2", "scaleTitle");
@@ -1307,6 +1543,7 @@
       setText("#scaleDrop div", "scaleDropHint");
       setText("#scaleDownloadAll", "scaleDownloadAll");
       setText("#scaleDownloadZip", "scaleDownloadZip");
+      setText("#scaleFormatLabel", "scaleFormat");
       setText("#scaleClear", "scaleClear");
       setText("#scalePaste", "paste");
       setText("#scaleToRename", "scaleToRename");
@@ -1316,6 +1553,12 @@
       setText("#renamePanel .rename-column:nth-child(2) .header-row span", "renameRight");
       setAllText("[data-sort-list]", "sort");
       setAllText("[data-clear-list]", "clear");
+      setText("#namePatternLabel", "namePattern");
+      setText("#nameStartLabel", "nameStart");
+      setText("#nameDigitsLabel", "nameDigits");
+      setText("#generateNames", "generateNames");
+      setText("#savePreset", "savePreset");
+      setText("#loadPreset", "loadPreset");
       setText("#renameLeftDrop", "renameDrop");
       setText("#renameRightDrop", "renameDrop");
       const renameConvert = document.getElementById("renameConvert");
@@ -1526,6 +1769,94 @@
         };
         image.src = url;
       });
+    }
+
+    function naturalCompare(a, b) {
+      return a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
+    }
+
+    function clampNumber(value, fallback, min) {
+      const number = Number(value);
+      if (!Number.isFinite(number)) {
+        return fallback;
+      }
+      return Math.max(min, Math.floor(number));
+    }
+
+    function extensionForMime(mimeType) {
+      if (mimeType === "image/webp") return "webp";
+      if (mimeType === "image/jpeg") return "jpg";
+      return "png";
+    }
+
+    function replaceExtension(fileName, extension) {
+      return fileName.replace(/\.[^.]+$/, "") + "." + extension;
+    }
+
+    function canvasToBlob(canvas, mimeType) {
+      return new Promise((resolve) => {
+        canvas.toBlob(resolve, mimeType, mimeType === "image/jpeg" ? 0.92 : undefined);
+      });
+    }
+
+    function getAlphaBounds(image) {
+      const canvas = document.createElement("canvas");
+      canvas.width = image.width;
+      canvas.height = image.height;
+      const context = canvas.getContext("2d", { willReadFrequently: true });
+      context.drawImage(image, 0, 0);
+      const data = context.getImageData(0, 0, canvas.width, canvas.height).data;
+      let minX = canvas.width;
+      let minY = canvas.height;
+      let maxX = -1;
+      let maxY = -1;
+
+      for (let y = 0; y < canvas.height; y += 1) {
+        for (let x = 0; x < canvas.width; x += 1) {
+          if (data[(y * canvas.width + x) * 4 + 3] > 0) {
+            minX = Math.min(minX, x);
+            minY = Math.min(minY, y);
+            maxX = Math.max(maxX, x);
+            maxY = Math.max(maxY, y);
+          }
+        }
+      }
+
+      if (maxX < minX || maxY < minY) {
+        return { x: 0, y: 0, width: image.width, height: image.height };
+      }
+
+      return { x: minX, y: minY, width: maxX - minX + 1, height: maxY - minY + 1 };
+    }
+
+    function getCommonBounds(images) {
+      const bounds = images.map(getAlphaBounds);
+      const minX = Math.min(...bounds.map((bound) => bound.x));
+      const minY = Math.min(...bounds.map((bound) => bound.y));
+      const maxX = Math.max(...bounds.map((bound) => bound.x + bound.width));
+      const maxY = Math.max(...bounds.map((bound) => bound.y + bound.height));
+      return {
+        x: Math.max(0, minX),
+        y: Math.max(0, minY),
+        width: Math.max(1, maxX - minX),
+        height: Math.max(1, maxY - minY)
+      };
+    }
+
+    function drawPreviewBackground(context, width, height, color, useChecker) {
+      context.fillStyle = color;
+      context.fillRect(0, 0, width, height);
+      if (!useChecker) {
+        return;
+      }
+
+      const size = 12;
+      for (let y = 0; y < height; y += size) {
+        for (let x = 0; x < width; x += size) {
+          context.fillStyle = ((x / size + y / size) % 2 === 0) ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.18)";
+          context.fillRect(x, y, size, size);
+        }
+      }
     }
 
     function renderPreviewGrid(container, records) {
@@ -1802,10 +2133,27 @@
       const clearButton = document.getElementById("sheetClear");
       const frameList = document.getElementById("sheetFrameList");
       const output = document.getElementById("sheetOutput");
+      const sortMode = document.getElementById("sheetSortMode");
+      const applySortButton = document.getElementById("sheetApplySort");
+      const columnsInput = document.getElementById("sheetColumns");
+      const paddingInput = document.getElementById("sheetPadding");
+      const spacingInput = document.getElementById("sheetSpacing");
+      const cropCommonInput = document.getElementById("sheetCropCommon");
+      const metadataInput = document.getElementById("sheetMetadata");
+      const animationCanvas = document.getElementById("animationCanvas");
+      const animationContext = animationCanvas.getContext("2d");
+      const animationFps = document.getElementById("animationFps");
+      const previewBgColor = document.getElementById("previewBgColor");
+      const previewChecker = document.getElementById("previewChecker");
+      const animationPlay = document.getElementById("animationPlay");
+      const animationStop = document.getElementById("animationStop");
       const transfers = document.getElementById("sheetTransfers");
       const toScaleButton = document.getElementById("sheetToScale");
       const toRenameButton = document.getElementById("sheetToRename");
       let sheetRecords = [];
+      let animationImages = [];
+      let animationIndex = 0;
+      let animationTimer = null;
 
       bindFileDropZone(drop, fileInput, (files) => {
         setSheetRecords(filesToRecords(files), "selectedImages");
@@ -1826,6 +2174,7 @@
         transfers.classList.remove("active");
         output.textContent = records.length > 0 ? t(messageKey, { count: records.length }) : "";
         renderFrameList();
+        refreshAnimationImages();
       }
 
       function renderFrameList() {
@@ -1873,7 +2222,112 @@
         toolBridge.spriteSheet = null;
         transfers.classList.remove("active");
         output.textContent = sheetRecords.length > 0 ? t("framesReady", { count: sheetRecords.length }) : "";
+        refreshAnimationImages();
       }
+
+      function applySort() {
+        if (sortMode.value === "nameAsc") {
+          sheetRecords.sort((a, b) => naturalCompare(a.name, b.name));
+        } else if (sortMode.value === "nameDesc") {
+          sheetRecords.sort((a, b) => naturalCompare(b.name, a.name));
+        } else if (sortMode.value === "reverse") {
+          sheetRecords.reverse();
+        }
+        renderFrameList();
+        syncRecordsFromList();
+      }
+
+      async function refreshAnimationImages() {
+        animationImages = await Promise.all(sheetRecords.map(loadRecordImage));
+        animationIndex = 0;
+        drawAnimationFrame();
+      }
+
+      function drawAnimationFrame() {
+        const image = animationImages[animationIndex];
+        const width = image ? image.width : 160;
+        const height = image ? image.height : 160;
+        animationCanvas.width = width;
+        animationCanvas.height = height;
+        drawPreviewBackground(animationContext, width, height, previewBgColor.value, previewChecker.checked);
+        if (image) {
+          animationContext.imageSmoothingEnabled = false;
+          animationContext.drawImage(image, 0, 0);
+        }
+      }
+
+      function startAnimation() {
+        stopAnimation();
+        if (animationImages.length === 0) {
+          return;
+        }
+        animationTimer = setInterval(() => {
+          animationIndex = (animationIndex + 1) % animationImages.length;
+          drawAnimationFrame();
+        }, 1000 / clampNumber(animationFps.value, 12, 1));
+      }
+
+      function stopAnimation() {
+        if (animationTimer) {
+          clearInterval(animationTimer);
+          animationTimer = null;
+        }
+      }
+
+      async function buildSpriteSheet(records) {
+        const images = await Promise.all(records.map(loadRecordImage));
+        const sourceBounds = cropCommonInput.checked ? getCommonBounds(images) : { x: 0, y: 0, width: images[0].width, height: images[0].height };
+        const frameWidth = sourceBounds.width;
+        const frameHeight = sourceBounds.height;
+        const columns = Math.min(records.length, clampNumber(columnsInput.value, records.length, 1));
+        const rows = Math.ceil(records.length / columns);
+        const padding = clampNumber(paddingInput.value, 0, 0);
+        const spacing = clampNumber(spacingInput.value, 0, 0);
+
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+        canvas.width = padding * 2 + columns * frameWidth + Math.max(0, columns - 1) * spacing;
+        canvas.height = padding * 2 + rows * frameHeight + Math.max(0, rows - 1) * spacing;
+
+        images.forEach((image, index) => {
+          const column = index % columns;
+          const row = Math.floor(index / columns);
+          context.drawImage(
+            image,
+            sourceBounds.x,
+            sourceBounds.y,
+            frameWidth,
+            frameHeight,
+            padding + column * (frameWidth + spacing),
+            padding + row * (frameHeight + spacing),
+            frameWidth,
+            frameHeight
+          );
+        });
+
+        return {
+          canvas,
+          metadata: {
+            frameWidth,
+            frameHeight,
+            frameCount: records.length,
+            columns,
+            rows,
+            padding,
+            spacing,
+            cropped: cropCommonInput.checked,
+            frames: records.map((record, index) => ({ index, name: record.name }))
+          }
+        };
+      }
+
+      applySortButton.addEventListener("click", applySort);
+      animationPlay.addEventListener("click", startAnimation);
+      animationStop.addEventListener("click", stopAnimation);
+      [animationFps, previewBgColor, previewChecker].forEach((control) => {
+        control.addEventListener("input", drawAnimationFrame);
+        control.addEventListener("change", drawAnimationFrame);
+      });
 
       toolBridge.toSheet = (records) => {
         setSheetRecords(records, "receivedImages");
@@ -1891,23 +2345,8 @@
           return;
         }
 
-        const images = await Promise.all(records.map(loadRecordImage));
-
-        const width = images[0].width;
-        const height = images[0].height;
-        const differentSize = images.some((image) => image.width !== width || image.height !== height);
-        if (differentSize && !confirm(t("mixedSizeConfirm"))) {
-          return;
-        }
-
-        const canvas = document.createElement("canvas");
-        const context = canvas.getContext("2d");
-        canvas.width = width * images.length;
-        canvas.height = height;
-
-        images.forEach((image, index) => {
-          context.drawImage(image, width * index, 0, width, height);
-        });
+        const result = await buildSpriteSheet(records);
+        const canvas = result.canvas;
 
         output.innerHTML = "";
         output.appendChild(canvas);
@@ -1921,22 +2360,29 @@
         output.appendChild(document.createElement("br"));
         output.appendChild(link);
 
-        const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+        const blob = await canvasToBlob(canvas, "image/png");
         toolBridge.spriteSheet = {
           name: "spritesheet.png",
           blob: blob
         };
+        if (metadataInput.checked) {
+          const metadataBlob = new Blob([JSON.stringify(result.metadata, null, 2)], { type: "application/json" });
+          downloadBlob(metadataBlob, "spritesheet.json");
+        }
         transfers.classList.add("active");
       });
 
       clearButton.addEventListener("click", () => {
+        stopAnimation();
         sheetRecords = [];
+        animationImages = [];
         toolBridge.sheetImages = [];
         toolBridge.spriteSheet = null;
         fileInput.value = "";
         frameList.innerHTML = "";
         output.innerHTML = "";
         transfers.classList.remove("active");
+        drawAnimationFrame();
       });
 
       toScaleButton.addEventListener("click", () => {
@@ -1959,6 +2405,7 @@
       const fileInput = document.getElementById("scaleFiles");
       const preview = document.getElementById("scalePreview");
       const scaleButtons = document.querySelectorAll(".scale-buttons [data-scale]");
+      const scaleFormat = document.getElementById("scaleFormat");
       const downloadAllButton = document.getElementById("scaleDownloadAll");
       const downloadZipButton = document.getElementById("scaleDownloadZip");
       const clearButton = document.getElementById("scaleClear");
@@ -2076,24 +2523,25 @@
             0, 0, data.img.width, data.img.height,
             0, 0, data.img.width * scale, data.img.height * scale
           );
-          canvas.toBlob(resolve, "image/png");
+          canvas.toBlob(resolve, scaleFormat.value, scaleFormat.value === "image/jpeg" ? 0.92 : undefined);
         });
       }
 
       async function downloadOne(index, scale) {
         const blob = await makeScaledBlob(images[index], scale);
-        downloadBlob(blob, images[index].name);
+        downloadBlob(blob, replaceExtension(images[index].name, extensionForMime(scaleFormat.value)));
       }
 
       downloadAllButton.addEventListener("click", async () => {
         const scaledRecords = [];
         for (const data of images) {
           const blob = await makeScaledBlob(data, currentScale);
+          const outputName = replaceExtension(data.name, extensionForMime(scaleFormat.value));
           scaledRecords.push({
-            name: data.name,
+            name: outputName,
             blob: blob
           });
-          downloadBlob(blob, data.name);
+          downloadBlob(blob, outputName);
         }
         toolBridge.scaledImages = scaledRecords;
         transfers.classList.toggle("active", scaledRecords.length > 0);
@@ -2104,11 +2552,12 @@
         const scaledRecords = [];
         for (const data of images) {
           const blob = await makeScaledBlob(data, currentScale);
+          const outputName = replaceExtension(data.name, extensionForMime(scaleFormat.value));
           scaledRecords.push({
-            name: data.name,
+            name: outputName,
             blob: blob
           });
-          zip.file(data.name, blob);
+          zip.file(outputName, blob);
         }
         toolBridge.scaledImages = scaledRecords;
         const content = await zip.generateAsync({ type: "blob" });
@@ -2125,8 +2574,9 @@
           const scaledRecords = [];
           for (const data of images) {
             const blob = await makeScaledBlob(data, currentScale);
+            const outputName = replaceExtension(data.name, extensionForMime(scaleFormat.value));
             scaledRecords.push({
-              name: data.name,
+              name: outputName,
               blob: blob
             });
           }
@@ -2149,6 +2599,12 @@
 
     (() => {
       const convertButton = document.getElementById("renameConvert");
+      const namePattern = document.getElementById("namePattern");
+      const nameStart = document.getElementById("nameStart");
+      const nameDigits = document.getElementById("nameDigits");
+      const generateNames = document.getElementById("generateNames");
+      const savePreset = document.getElementById("savePreset");
+      const loadPreset = document.getElementById("loadPreset");
 
       if (window.Sortable) {
         new Sortable(document.getElementById("renameLeftList"), { animation: 150, onSort: checkStatus });
@@ -2178,6 +2634,61 @@
         button.addEventListener("click", () => {
           document.getElementById(button.dataset.clearList).innerHTML = "";
           checkStatus();
+        });
+      });
+
+      generateNames.addEventListener("click", () => {
+        const rightCount = document.getElementById("renameRightList").children.length;
+        const leftCount = document.getElementById("renameLeftList").children.length;
+        const count = rightCount || leftCount || 1;
+        const start = clampNumber(nameStart.value, 1, 0);
+        const digits = clampNumber(nameDigits.value, 3, 1);
+        const pattern = namePattern.value || "frame_{num}.png";
+        const names = Array.from({ length: count }, (_, index) => {
+          const number = String(start + index).padStart(digits, "0");
+          return pattern.replaceAll("{num}", number).replaceAll("{index}", String(index + 1));
+        });
+        const list = document.getElementById("renameLeftList");
+        list.innerHTML = "";
+        addNameItems(names, "renameLeftList");
+      });
+
+      savePreset.addEventListener("click", () => {
+        const preset = {
+          sheetColumns: document.getElementById("sheetColumns").value,
+          sheetPadding: document.getElementById("sheetPadding").value,
+          sheetSpacing: document.getElementById("sheetSpacing").value,
+          sheetCropCommon: document.getElementById("sheetCropCommon").checked,
+          sheetMetadata: document.getElementById("sheetMetadata").checked,
+          animationFps: document.getElementById("animationFps").value,
+          previewBgColor: document.getElementById("previewBgColor").value,
+          previewChecker: document.getElementById("previewChecker").checked,
+          scaleFormat: document.getElementById("scaleFormat").value,
+          scaleValue: document.querySelector(".scale-buttons [data-scale].active")?.dataset.scale || "2",
+          namePattern: namePattern.value,
+          nameStart: nameStart.value,
+          nameDigits: nameDigits.value
+        };
+        localStorage.setItem("imageUtilityPreset", JSON.stringify(preset));
+      });
+
+      loadPreset.addEventListener("click", () => {
+        const preset = JSON.parse(localStorage.getItem("imageUtilityPreset") || "{}");
+        Object.keys(preset).forEach((key) => {
+          if (key === "scaleValue") {
+            const scaleButton = document.querySelector('.scale-buttons [data-scale="' + preset[key] + '"]');
+            if (scaleButton) {
+              scaleButton.click();
+            }
+            return;
+          }
+          const element = document.getElementById(key);
+          if (!element) return;
+          if (element.type === "checkbox") {
+            element.checked = Boolean(preset[key]);
+          } else {
+            element.value = preset[key];
+          }
         });
       });
 
@@ -2230,6 +2741,37 @@
           const info = document.createElement("div");
           info.className = "file-info";
           info.textContent = record.name;
+
+          const removeButton = document.createElement("button");
+          removeButton.type = "button";
+          removeButton.className = "remove-btn";
+          removeButton.innerHTML = "&times;";
+          removeButton.addEventListener("click", () => {
+            item.remove();
+            checkStatus();
+          });
+
+          item.appendChild(image);
+          item.appendChild(info);
+          item.appendChild(removeButton);
+          list.appendChild(item);
+        });
+        checkStatus();
+      }
+
+      function addNameItems(names, listId) {
+        const list = document.getElementById(listId);
+        names.forEach((name) => {
+          const item = document.createElement("li");
+          item.className = "file-item";
+
+          const image = document.createElement("div");
+          image.className = "thumb";
+
+          const info = document.createElement("div");
+          info.className = "file-info";
+          info.textContent = name;
+          info.title = name;
 
           const removeButton = document.createElement("button");
           removeButton.type = "button";
