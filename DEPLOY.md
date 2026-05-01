@@ -14,8 +14,8 @@
 1. 사이트를 먼저 배포합니다.
 2. 개인정보 처리방침, 이용 안내, 문의 페이지가 실제로 열리는지 확인합니다.
 3. AdSense에 사이트를 등록합니다.
-4. 승인 후 `index.html` 상단의 AdSense 주석을 실제 코드로 교체합니다.
-5. `광고 자리`라고 표시된 영역을 실제 광고 코드로 교체합니다.
+4. 자동 광고 스크립트는 이미 `index.html`에 들어 있습니다.
+5. `ads.txt`가 `https://yesterday-x2.github.io/ads.txt`와 `https://yesterday-x2.github.io/online-image-tools/ads.txt`에서 열리는지 확인합니다.
 
 ## 배포 전에 확인할 것
 

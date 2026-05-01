@@ -15,7 +15,13 @@ GitHub Pages, Cloudflare Pages, Vercel 같은 정적 호스팅에 이 폴더를 
 
 ## 광고
 
-AdSense 승인을 받은 뒤 `index.html` 상단 주석의 `ca-pub-YOUR_ID`와 광고 슬롯 영역을 실제 광고 코드로 교체하세요.
+AdSense 자동 광고 스크립트는 `index.html`의 `<head>`에 들어 있습니다.
+
+`ads.txt`에는 다음 판매자 정보가 들어 있습니다.
+
+```txt
+google.com, pub-3470479809322768, DIRECT, f08c47fec0942fa0
+```
 
 ## 주의
 
