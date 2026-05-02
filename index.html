@@ -899,6 +899,7 @@
         <div class="paste-area" id="scalePaste">Ctrl + V 로 이미지 붙여넣기</div>
         <div class="preview-grid" id="scalePreview"></div>
         <div class="transfer-actions" id="scaleTransfers">
+          <button type="button" id="scaleToSheet">현재 배율 결과를 스프라이트 시트로 보내기</button>
           <button type="button" id="scaleToRename">현재 배율 결과를 파일명 교체기 원본에 넣기</button>
         </div>
       </div>
@@ -1063,6 +1064,7 @@
         scaleFormat: "출력 형식",
         scaleClear: "불러온 이미지 비우기",
         paste: "Ctrl + V 로 이미지 붙여넣기",
+        scaleToSheet: "현재 배율 결과를 스프라이트 시트로 보내기",
         scaleToRename: "현재 배율 결과를 파일명 교체기 원본에 넣기",
         renameTitle: "파일명 교체기",
         renameDesc: "왼쪽 파일명의 순서를 기준으로 오른쪽 원본 파일들을 같은 이름으로 압축합니다.",
@@ -1164,6 +1166,7 @@
         scaleFormat: "Output format",
         scaleClear: "Clear loaded images",
         paste: "Paste images with Ctrl + V",
+        scaleToSheet: "Send current-scale output to Sprite Sheet",
         scaleToRename: "Send current-scale output to Rename originals",
         renameTitle: "File Renamer",
         renameDesc: "Use the left file-name order to package the right-side originals with matching names.",
@@ -1265,6 +1268,7 @@
         scaleFormat: "输出格式",
         scaleClear: "清除已载入图片",
         paste: "用 Ctrl + V 粘贴图片",
+        scaleToSheet: "将当前倍率结果发送到精灵图",
         scaleToRename: "将当前倍率结果发送到文件名替换原图",
         renameTitle: "文件名替换器",
         renameDesc: "按照左侧文件名顺序，将右侧原图用对应名称打包。",
@@ -1366,6 +1370,7 @@
         scaleFormat: "出力形式",
         scaleClear: "読み込んだ画像を削除",
         paste: "Ctrl + V で画像を貼り付け",
+        scaleToSheet: "現在の倍率の結果をスプライトシートへ送る",
         scaleToRename: "現在の倍率の結果をファイル名置換の元画像へ送る",
         renameTitle: "ファイル名置換",
         renameDesc: "左側のファイル名の順番を基準に、右側の元画像を同じ名前で圧縮します。",
@@ -1546,6 +1551,7 @@
       setText("#scaleFormatLabel", "scaleFormat");
       setText("#scaleClear", "scaleClear");
       setText("#scalePaste", "paste");
+      setText("#scaleToSheet", "scaleToSheet");
       setText("#scaleToRename", "scaleToRename");
       setText("#renamePanel .section-head h2", "renameTitle");
       setText("#renamePanel .section-head p", "renameDesc");
@@ -2410,6 +2416,7 @@
       const downloadZipButton = document.getElementById("scaleDownloadZip");
       const clearButton = document.getElementById("scaleClear");
       const transfers = document.getElementById("scaleTransfers");
+      const toSheetButton = document.getElementById("scaleToSheet");
       const toRenameButton = document.getElementById("scaleToRename");
       let images = [];
       let count = 1;
@@ -2532,7 +2539,7 @@
         downloadBlob(blob, replaceExtension(images[index].name, extensionForMime(scaleFormat.value)));
       }
 
-      downloadAllButton.addEventListener("click", async () => {
+      async function buildScaledRecords() {
         const scaledRecords = [];
         for (const data of images) {
           const blob = await makeScaledBlob(data, currentScale);
@@ -2541,28 +2548,37 @@
             name: outputName,
             blob: blob
           });
-          downloadBlob(blob, outputName);
         }
         toolBridge.scaledImages = scaledRecords;
         transfers.classList.toggle("active", scaledRecords.length > 0);
+        return scaledRecords;
+      }
+
+      downloadAllButton.addEventListener("click", async () => {
+        const scaledRecords = await buildScaledRecords();
+        for (const data of scaledRecords) {
+          downloadBlob(data.blob, data.name);
+        }
       });
 
       downloadZipButton.addEventListener("click", async () => {
         const zip = new JSZip();
-        const scaledRecords = [];
-        for (const data of images) {
-          const blob = await makeScaledBlob(data, currentScale);
-          const outputName = replaceExtension(data.name, extensionForMime(scaleFormat.value));
-          scaledRecords.push({
-            name: outputName,
-            blob: blob
-          });
-          zip.file(outputName, blob);
+        const scaledRecords = await buildScaledRecords();
+        for (const data of scaledRecords) {
+          zip.file(data.name, data.blob);
         }
-        toolBridge.scaledImages = scaledRecords;
         const content = await zip.generateAsync({ type: "blob" });
         downloadBlob(content, "scaled_images_x" + currentScale + ".zip");
-        transfers.classList.toggle("active", scaledRecords.length > 0);
+      });
+
+      toSheetButton.addEventListener("click", async () => {
+        if (!toolBridge.toSheet) {
+          return;
+        }
+
+        const scaledRecords = toolBridge.scaledImages.length > 0 ? toolBridge.scaledImages : await buildScaledRecords();
+        toolBridge.toSheet(cloneRecords(scaledRecords));
+        window.showToolTab("sheetPanel");
       });
 
       toRenameButton.addEventListener("click", async () => {
@@ -2571,16 +2587,7 @@
         }
 
         if (toolBridge.scaledImages.length === 0) {
-          const scaledRecords = [];
-          for (const data of images) {
-            const blob = await makeScaledBlob(data, currentScale);
-            const outputName = replaceExtension(data.name, extensionForMime(scaleFormat.value));
-            scaledRecords.push({
-              name: outputName,
-              blob: blob
-            });
-          }
-          toolBridge.scaledImages = scaledRecords;
+          await buildScaledRecords();
         }
 
         toolBridge.toRenameRight(cloneRecords(toolBridge.scaledImages));
