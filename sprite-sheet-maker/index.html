@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Free browser tools for sprite sheet making, PSD layer extraction, pixel art image scaling, and bulk image file renaming. Files are processed locally in your browser.">
+  <meta name="description" content="Create sprite sheets from PNG animation frames in your browser with frame reordering, preview, transparent crop, and metadata export.">
   <meta name="robots" content="index, follow">
-  <link rel="canonical" href="https://yesterday-x2.github.io/online-image-tools/">
-  <meta property="og:title" content="Free Sprite Sheet Maker & PSD Layer Extractor">
-  <meta property="og:description" content="Make sprite sheets, extract PSD layers, scale pixel art images, and rename image files in one browser-based workflow.">
+  <link rel="canonical" href="https://yesterday-x2.github.io/online-image-tools/sprite-sheet-maker/">
+  <meta property="og:title" content="Free Sprite Sheet Maker - Combine PNG Animation Frames">
+  <meta property="og:description" content="Create sprite sheets from PNG animation frames in your browser with frame reordering, preview, transparent crop, and metadata export.">
   <meta property="og:type" content="website">
-  <title>Free Sprite Sheet Maker & PSD Layer Extractor</title>
+  <title>Free Sprite Sheet Maker - Combine PNG Animation Frames</title>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3470479809322768"
      crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/psd.js/3.4.0/psd.min.js"></script>
@@ -775,13 +775,13 @@
     </div>
 
     <nav class="tabs" aria-label="도구 선택">
-      <button class="tab active" type="button" data-tab="layerPanel">레이어 추출</button>
-      <button class="tab" type="button" data-tab="sheetPanel">스프라이트 시트</button>
+      <button class="tab" type="button" data-tab="layerPanel">레이어 추출</button>
+      <button class="tab active" type="button" data-tab="sheetPanel">스프라이트 시트</button>
       <button class="tab" type="button" data-tab="scalePanel">이미지 스케일</button>
       <button class="tab" type="button" data-tab="renamePanel">파일명 교체</button>
     </nav>
 
-    <section class="panel active" id="layerPanel">
+    <section class="panel" id="layerPanel">
       <div class="section-head">
         <h2>PSD 레이어 추출기</h2>
         <p>PSD 레이어를 원본 캔버스 크기의 PNG 파일로 추출하고 ZIP으로 저장합니다.</p>
@@ -815,7 +815,7 @@
       </div>
     </section>
 
-    <section class="panel" id="sheetPanel">
+    <section class="panel active" id="sheetPanel">
       <div class="section-head">
         <h2>스프라이트 시트 생성기</h2>
         <p>선택한 이미지들을 가로 방향으로 이어 붙여 하나의 PNG로 만듭니다.</p>

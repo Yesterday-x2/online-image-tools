@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Free browser tools for sprite sheet making, PSD layer extraction, pixel art image scaling, and bulk image file renaming. Files are processed locally in your browser.">
+  <meta name="description" content="Scale pixel art and PNG images cleanly by 2x, 3x, or 4x in your browser and download individual files or a ZIP.">
   <meta name="robots" content="index, follow">
-  <link rel="canonical" href="https://yesterday-x2.github.io/online-image-tools/">
-  <meta property="og:title" content="Free Sprite Sheet Maker & PSD Layer Extractor">
-  <meta property="og:description" content="Make sprite sheets, extract PSD layers, scale pixel art images, and rename image files in one browser-based workflow.">
+  <link rel="canonical" href="https://yesterday-x2.github.io/online-image-tools/pixel-art-scaler/">
+  <meta property="og:title" content="Free Pixel Art Image Scaler - Scale PNG 2x 3x 4x">
+  <meta property="og:description" content="Scale pixel art and PNG images cleanly by 2x, 3x, or 4x in your browser and download individual files or a ZIP.">
   <meta property="og:type" content="website">
-  <title>Free Sprite Sheet Maker & PSD Layer Extractor</title>
+  <title>Free Pixel Art Image Scaler - Scale PNG 2x 3x 4x</title>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3470479809322768"
      crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/psd.js/3.4.0/psd.min.js"></script>
@@ -775,13 +775,13 @@
     </div>
 
     <nav class="tabs" aria-label="도구 선택">
-      <button class="tab active" type="button" data-tab="layerPanel">레이어 추출</button>
+      <button class="tab" type="button" data-tab="layerPanel">레이어 추출</button>
       <button class="tab" type="button" data-tab="sheetPanel">스프라이트 시트</button>
-      <button class="tab" type="button" data-tab="scalePanel">이미지 스케일</button>
+      <button class="tab active" type="button" data-tab="scalePanel">이미지 스케일</button>
       <button class="tab" type="button" data-tab="renamePanel">파일명 교체</button>
     </nav>
 
-    <section class="panel active" id="layerPanel">
+    <section class="panel" id="layerPanel">
       <div class="section-head">
         <h2>PSD 레이어 추출기</h2>
         <p>PSD 레이어를 원본 캔버스 크기의 PNG 파일로 추출하고 ZIP으로 저장합니다.</p>
@@ -876,7 +876,7 @@
       </div>
     </section>
 
-    <section class="panel" id="scalePanel">
+    <section class="panel active" id="scalePanel">
       <div class="section-head">
         <h2>이미지 스케일 + 클립보드</h2>
         <p>이미지를 픽셀 보존 방식으로 2배, 3배, 4배 확대해서 저장합니다.</p>
