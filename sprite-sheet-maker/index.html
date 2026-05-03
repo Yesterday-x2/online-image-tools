@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Create sprite sheets from PNG animation frames in your browser with frame reordering, preview, transparent crop, and metadata export.">
+  <meta name="description" content="Create sprite sheets from PNG animation frames in your browser with frame reordering, atlas building, preview, transparent crop, and metadata export.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://yesterday-x2.github.io/online-image-tools/sprite-sheet-maker/">
   <meta property="og:title" content="Free Sprite Sheet Maker - Combine PNG Animation Frames">
-  <meta property="og:description" content="Create sprite sheets from PNG animation frames in your browser with frame reordering, preview, transparent crop, and metadata export.">
+  <meta property="og:description" content="Create sprite sheets from PNG animation frames in your browser with frame reordering, atlas building, preview, transparent crop, and metadata export.">
   <meta property="og:type" content="website">
   <title>Free Sprite Sheet Maker - Combine PNG Animation Frames</title>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3470479809322768"
@@ -704,6 +704,29 @@
       image-rendering: pixelated;
     }
 
+    .atlas-builder {
+      margin-top: 16px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel-2);
+      padding: 14px;
+    }
+
+    .atlas-builder h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+    }
+
+    .atlas-preview {
+      margin-top: 12px;
+      overflow: auto;
+      text-align: center;
+    }
+
+    .atlas-preview canvas {
+      image-rendering: pixelated;
+    }
+
     @media (max-width: 820px) {
       .topbar {
         align-items: flex-start;
@@ -870,6 +893,40 @@
       </div>
       <ul class="file-list" id="sheetFrameList"></ul>
       <div class="output" id="sheetOutput"></div>
+      <div class="atlas-builder" id="atlasBuilder">
+        <h3 id="atlasTitle">아틀라스 스프라이트 만들기</h3>
+        <p id="atlasDesc" style="margin:0 0 12px;color:var(--muted);font-size:13px;">생성한 스프라이트 애니메이션이나 기존 시트 이미지를 아래 또는 옆으로 이어붙여 하나의 아틀라스로 만듭니다.</p>
+        <div class="drop-zone" id="atlasDrop">
+          <input type="file" id="atlasFiles" multiple hidden accept="image/*">
+          <strong id="atlasDropTitle">기존 스프라이트 시트를 드래그하거나 클릭하여 추가</strong>
+          <div id="atlasDropHint" style="margin-top:8px;color:var(--muted);font-size:13px;">Idle, Walk, Attack 같은 애니메이션 시트를 여러 개 넣어 아틀라스로 묶을 수 있습니다.</div>
+        </div>
+        <div class="option-grid">
+          <label>
+            <span id="atlasDirectionLabel">확장 방향</span>
+            <select id="atlasDirection">
+              <option value="vertical">아래로 확장</option>
+              <option value="horizontal">옆으로 확장</option>
+            </select>
+          </label>
+          <label>
+            <span id="atlasSpacingLabel">시트 간격</span>
+            <input type="number" id="atlasSpacing" min="0" value="0">
+          </label>
+          <label>
+            <span id="atlasNameLabel">다운로드 파일명</span>
+            <input type="text" id="atlasName" value="atlas_sprite.png">
+          </label>
+        </div>
+        <div class="tool-row">
+          <button type="button" id="atlasAddCurrent">현재 생성된 시트 추가</button>
+          <button type="button" id="atlasPreviewButton">아틀라스 미리보기</button>
+          <button class="primary-btn" type="button" id="atlasDownload" disabled>아틀라스 다운로드</button>
+          <button type="button" id="atlasClear">아틀라스 목록 비우기</button>
+        </div>
+        <ul class="file-list" id="atlasList"></ul>
+        <div class="atlas-preview" id="atlasOutput"></div>
+      </div>
       <div class="transfer-actions" id="sheetTransfers">
         <button type="button" id="sheetToScale">생성된 시트를 이미지 스케일러로 보내기</button>
         <button type="button" id="sheetToRename">생성된 시트를 파일명 교체기 원본에 넣기</button>
@@ -1069,6 +1126,21 @@
         sheetDownload: "스프라이트 시트 다운로드",
         sheetToScale: "생성된 시트를 이미지 스케일러로 보내기",
         sheetToRename: "생성된 시트를 파일명 교체기 원본에 넣기",
+        atlasTitle: "아틀라스 스프라이트 만들기",
+        atlasDesc: "생성한 스프라이트 애니메이션이나 기존 시트 이미지를 아래 또는 옆으로 이어붙여 하나의 아틀라스로 만듭니다.",
+        atlasDropTitle: "기존 스프라이트 시트를 드래그하거나 클릭하여 추가",
+        atlasDropHint: "Idle, Walk, Attack 같은 애니메이션 시트를 여러 개 넣어 아틀라스로 묶을 수 있습니다.",
+        atlasDirection: "확장 방향",
+        atlasVertical: "아래로 확장",
+        atlasHorizontal: "옆으로 확장",
+        atlasSpacing: "시트 간격",
+        atlasName: "다운로드 파일명",
+        atlasAddCurrent: "현재 생성된 시트 추가",
+        atlasPreview: "아틀라스 미리보기",
+        atlasDownload: "아틀라스 다운로드",
+        atlasClear: "아틀라스 목록 비우기",
+        atlasEmpty: "아틀라스에 넣을 시트를 먼저 추가하세요.",
+        atlasReady: "아틀라스 준비됨: {count}개 시트 / {width}x{height}",
         scaleTitle: "픽셀아트 이미지 스케일러",
         scaleDesc: "이미지를 픽셀 보존 방식으로 2배, 3배, 4배 확대해서 저장합니다.",
         scaleDropHint: "파일 업로드와 Ctrl + V 붙여넣기를 모두 사용할 수 있습니다.",
@@ -1171,6 +1243,21 @@
         sheetDownload: "Download sprite sheet",
         sheetToScale: "Send generated sheet to Image Scaler",
         sheetToRename: "Send generated sheet to Rename originals",
+        atlasTitle: "Atlas Sprite Builder",
+        atlasDesc: "Combine generated sprite animations or existing sheet images downward or sideways into one atlas.",
+        atlasDropTitle: "Drag existing sprite sheets here or click to add",
+        atlasDropHint: "Add multiple animation sheets such as Idle, Walk, and Attack, then combine them into an atlas.",
+        atlasDirection: "Expansion direction",
+        atlasVertical: "Extend downward",
+        atlasHorizontal: "Extend sideways",
+        atlasSpacing: "Sheet spacing",
+        atlasName: "Download file name",
+        atlasAddCurrent: "Add current generated sheet",
+        atlasPreview: "Preview atlas",
+        atlasDownload: "Download atlas",
+        atlasClear: "Clear atlas list",
+        atlasEmpty: "Add sheets to the atlas first.",
+        atlasReady: "Atlas ready: {count} sheets / {width}x{height}",
         scaleTitle: "Pixel Art Image Scaler",
         scaleDesc: "Scale images by 2x, 3x, or 4x while preserving pixel edges.",
         scaleDropHint: "You can upload files or paste images with Ctrl + V.",
@@ -1273,6 +1360,21 @@
         sheetDownload: "下载精灵图",
         sheetToScale: "将生成的精灵图发送到图像缩放",
         sheetToRename: "将生成的精灵图发送到文件名替换原图",
+        atlasTitle: "图集精灵生成器",
+        atlasDesc: "将生成的精灵动画或已有精灵图向下或横向拼接成一个图集。",
+        atlasDropTitle: "拖入已有精灵图或点击添加",
+        atlasDropHint: "可以添加 Idle、Walk、Attack 等多个动画精灵图并合成为图集。",
+        atlasDirection: "扩展方向",
+        atlasVertical: "向下扩展",
+        atlasHorizontal: "横向扩展",
+        atlasSpacing: "图间距",
+        atlasName: "下载文件名",
+        atlasAddCurrent: "添加当前生成的精灵图",
+        atlasPreview: "预览图集",
+        atlasDownload: "下载图集",
+        atlasClear: "清空图集列表",
+        atlasEmpty: "请先添加要放入图集的精灵图。",
+        atlasReady: "图集已准备：{count} 张 / {width}x{height}",
         scaleTitle: "像素图缩放器",
         scaleDesc: "以保留像素边缘的方式将图像放大 2 倍、3 倍或 4 倍。",
         scaleDropHint: "可以上传文件，也可以用 Ctrl + V 粘贴图片。",
@@ -1375,6 +1477,21 @@
         sheetDownload: "スプライトシートをダウンロード",
         sheetToScale: "生成したシートを画像スケーラーへ送る",
         sheetToRename: "生成したシートをファイル名置換の元画像へ送る",
+        atlasTitle: "アトラススプライト作成",
+        atlasDesc: "生成したスプライトアニメーションや既存シート画像を下または横へつなげて、1枚のアトラスにします。",
+        atlasDropTitle: "既存スプライトシートをドラッグ、またはクリックして追加",
+        atlasDropHint: "Idle、Walk、Attack など複数のアニメーションシートを追加してアトラス化できます。",
+        atlasDirection: "拡張方向",
+        atlasVertical: "下へ拡張",
+        atlasHorizontal: "横へ拡張",
+        atlasSpacing: "シート間隔",
+        atlasName: "ダウンロードファイル名",
+        atlasAddCurrent: "現在生成したシートを追加",
+        atlasPreview: "アトラスをプレビュー",
+        atlasDownload: "アトラスをダウンロード",
+        atlasClear: "アトラス一覧を空にする",
+        atlasEmpty: "先にアトラスへ入れるシートを追加してください。",
+        atlasReady: "アトラス準備完了: {count}枚 / {width}x{height}",
         scaleTitle: "ピクセルアート画像スケーラー",
         scaleDesc: "ピクセルのエッジを保ったまま画像を2倍、3倍、4倍に拡大します。",
         scaleDropHint: "ファイルのアップロードと Ctrl + V の貼り付けが使えます。",
@@ -1661,6 +1778,19 @@
       setText("#animationStop", "stop");
       setText("#sheetToScale", "sheetToScale");
       setText("#sheetToRename", "sheetToRename");
+      setText("#atlasTitle", "atlasTitle");
+      setText("#atlasDesc", "atlasDesc");
+      setText("#atlasDropTitle", "atlasDropTitle");
+      setText("#atlasDropHint", "atlasDropHint");
+      setText("#atlasDirectionLabel", "atlasDirection");
+      setText('#atlasDirection option[value="vertical"]', "atlasVertical");
+      setText('#atlasDirection option[value="horizontal"]', "atlasHorizontal");
+      setText("#atlasSpacingLabel", "atlasSpacing");
+      setText("#atlasNameLabel", "atlasName");
+      setText("#atlasAddCurrent", "atlasAddCurrent");
+      setText("#atlasPreviewButton", "atlasPreview");
+      setText("#atlasDownload", "atlasDownload");
+      setText("#atlasClear", "atlasClear");
       setText("#scalePanel .section-head h2", "scaleTitle");
       setText("#scalePanel .section-head p", "scaleDesc");
       setText("#scaleDrop strong", "imageDropTitle");
@@ -2296,7 +2426,20 @@
       const transfers = document.getElementById("sheetTransfers");
       const toScaleButton = document.getElementById("sheetToScale");
       const toRenameButton = document.getElementById("sheetToRename");
+      const atlasDrop = document.getElementById("atlasDrop");
+      const atlasFiles = document.getElementById("atlasFiles");
+      const atlasList = document.getElementById("atlasList");
+      const atlasOutput = document.getElementById("atlasOutput");
+      const atlasDirection = document.getElementById("atlasDirection");
+      const atlasSpacing = document.getElementById("atlasSpacing");
+      const atlasName = document.getElementById("atlasName");
+      const atlasAddCurrent = document.getElementById("atlasAddCurrent");
+      const atlasPreviewButton = document.getElementById("atlasPreviewButton");
+      const atlasDownload = document.getElementById("atlasDownload");
+      const atlasClear = document.getElementById("atlasClear");
       let sheetRecords = [];
+      let atlasRecords = [];
+      let atlasCanvas = null;
       let animationImages = [];
       let animationIndex = 0;
       let animationTimer = null;
@@ -2305,11 +2448,20 @@
         setSheetRecords(filesToRecords(files), "selectedImages");
       });
 
+      bindFileDropZone(atlasDrop, atlasFiles, (files) => {
+        addAtlasRecords(filesToRecords(files));
+      });
+
       if (window.Sortable) {
         new Sortable(frameList, {
           animation: 150,
           handle: ".drag-handle",
           onSort: syncRecordsFromList
+        });
+        new Sortable(atlasList, {
+          animation: 150,
+          handle: ".drag-handle",
+          onSort: syncAtlasRecordsFromList
         });
       }
 
@@ -2420,6 +2572,107 @@
         }
       }
 
+      function addAtlasRecords(records) {
+        atlasRecords = atlasRecords.concat(records);
+        renderAtlasList();
+        refreshAtlasPreview();
+      }
+
+      function renderAtlasList() {
+        atlasList.innerHTML = "";
+        atlasRecords.forEach((record) => {
+          const item = document.createElement("li");
+          item.className = "file-item";
+          item.record = record;
+
+          const handle = document.createElement("span");
+          handle.className = "drag-handle";
+          handle.textContent = "↕";
+
+          const image = document.createElement("img");
+          image.className = "thumb";
+          const url = URL.createObjectURL(record.blob);
+          image.onload = () => URL.revokeObjectURL(url);
+          image.src = url;
+
+          const info = document.createElement("div");
+          info.className = "file-info";
+          info.textContent = record.name;
+          info.title = record.name;
+
+          const removeButton = document.createElement("button");
+          removeButton.type = "button";
+          removeButton.className = "remove-btn";
+          removeButton.innerHTML = "&times;";
+          removeButton.addEventListener("click", () => {
+            item.remove();
+            syncAtlasRecordsFromList();
+          });
+
+          item.appendChild(handle);
+          item.appendChild(image);
+          item.appendChild(info);
+          item.appendChild(removeButton);
+          atlasList.appendChild(item);
+        });
+      }
+
+      function syncAtlasRecordsFromList() {
+        atlasRecords = Array.from(atlasList.children).map((item) => item.record);
+        refreshAtlasPreview();
+      }
+
+      async function buildAtlasCanvas() {
+        if (atlasRecords.length === 0) {
+          atlasCanvas = null;
+          atlasOutput.textContent = t("atlasEmpty");
+          atlasDownload.disabled = true;
+          return null;
+        }
+
+        const images = await Promise.all(atlasRecords.map(loadRecordImage));
+        const spacing = clampNumber(atlasSpacing.value, 0, 0);
+        const isVertical = atlasDirection.value === "vertical";
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+        context.imageSmoothingEnabled = false;
+        canvas.width = isVertical
+          ? Math.max(...images.map((image) => image.width))
+          : images.reduce((sum, image) => sum + image.width, 0) + spacing * Math.max(0, images.length - 1);
+        canvas.height = isVertical
+          ? images.reduce((sum, image) => sum + image.height, 0) + spacing * Math.max(0, images.length - 1)
+          : Math.max(...images.map((image) => image.height));
+
+        let offset = 0;
+        images.forEach((image) => {
+          context.drawImage(image, isVertical ? 0 : offset, isVertical ? offset : 0);
+          offset += (isVertical ? image.height : image.width) + spacing;
+        });
+
+        return canvas;
+      }
+
+      async function refreshAtlasPreview() {
+        atlasCanvas = await buildAtlasCanvas();
+        atlasOutput.innerHTML = "";
+        if (!atlasCanvas) {
+          atlasOutput.textContent = t("atlasEmpty");
+          return;
+        }
+
+        atlasOutput.appendChild(atlasCanvas);
+        const summary = document.createElement("div");
+        summary.style.marginTop = "8px";
+        summary.style.color = "var(--muted)";
+        summary.textContent = t("atlasReady", {
+          count: atlasRecords.length,
+          width: atlasCanvas.width,
+          height: atlasCanvas.height
+        });
+        atlasOutput.appendChild(summary);
+        atlasDownload.disabled = false;
+      }
+
       async function buildSpriteSheet(records) {
         const images = await Promise.all(records.map(loadRecordImage));
         const sourceBounds = cropCommonInput.checked ? getCommonBounds(images) : { x: 0, y: 0, width: images[0].width, height: images[0].height };
@@ -2516,6 +2769,41 @@
           downloadBlob(metadataBlob, "spritesheet.json");
         }
         transfers.classList.add("active");
+      });
+
+      atlasAddCurrent.addEventListener("click", () => {
+        if (!toolBridge.spriteSheet) {
+          alert(t("atlasEmpty"));
+          return;
+        }
+        addAtlasRecords([toolBridge.spriteSheet]);
+      });
+
+      atlasPreviewButton.addEventListener("click", refreshAtlasPreview);
+
+      [atlasDirection, atlasSpacing].forEach((control) => {
+        control.addEventListener("input", refreshAtlasPreview);
+        control.addEventListener("change", refreshAtlasPreview);
+      });
+
+      atlasDownload.addEventListener("click", async () => {
+        if (!atlasCanvas) {
+          atlasCanvas = await buildAtlasCanvas();
+        }
+        if (!atlasCanvas) {
+          return;
+        }
+        const blob = await canvasToBlob(atlasCanvas, "image/png");
+        downloadBlob(blob, atlasName.value || "atlas_sprite.png");
+      });
+
+      atlasClear.addEventListener("click", () => {
+        atlasRecords = [];
+        atlasCanvas = null;
+        atlasFiles.value = "";
+        atlasList.innerHTML = "";
+        atlasOutput.innerHTML = "";
+        atlasDownload.disabled = true;
       });
 
       clearButton.addEventListener("click", () => {
