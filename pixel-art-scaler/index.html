@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Scale pixel art and PNG images cleanly by 2x, 3x, or 4x in your browser and download individual files or a ZIP.">
+  <meta name="description" content="Scale pixel art and PNG images cleanly by 0.5x, 2x, 3x, or 4x in your browser and download individual files or a ZIP.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://yesterday-x2.github.io/online-image-tools/pixel-art-scaler/">
   <meta property="og:title" content="Free Pixel Art Image Scaler - Scale PNG 2x 3x 4x">
-  <meta property="og:description" content="Scale pixel art and PNG images cleanly by 2x, 3x, or 4x in your browser and download individual files or a ZIP.">
+  <meta property="og:description" content="Scale pixel art and PNG images cleanly by 0.5x, 2x, 3x, or 4x in your browser and download individual files or a ZIP.">
   <meta property="og:type" content="website">
   <title>Free Pixel Art Image Scaler - Scale PNG 2x 3x 4x</title>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3470479809322768"
@@ -945,6 +945,7 @@
           <div style="margin-top:8px;color:var(--muted);font-size:13px;">파일 업로드와 Ctrl + V 붙여넣기를 모두 사용할 수 있습니다.</div>
         </div>
         <div class="tool-row scale-buttons" style="justify-content:center;">
+          <button type="button" data-scale="0.5">x0.5</button>
           <button type="button" data-scale="1">x1</button>
           <button type="button" data-scale="2" class="active">x2</button>
           <button type="button" data-scale="3">x3</button>
@@ -1142,7 +1143,7 @@
         atlasEmpty: "아틀라스에 넣을 시트를 먼저 추가하세요.",
         atlasReady: "아틀라스 준비됨: {count}개 시트 / {width}x{height}",
         scaleTitle: "픽셀아트 이미지 스케일러",
-        scaleDesc: "이미지를 픽셀 보존 방식으로 2배, 3배, 4배 확대해서 저장합니다.",
+        scaleDesc: "이미지를 픽셀 보존 방식으로 0.5배 축소하거나 2배, 3배, 4배 확대해서 저장합니다.",
         scaleDropHint: "파일 업로드와 Ctrl + V 붙여넣기를 모두 사용할 수 있습니다.",
         scaleDownloadAll: "현재 배율로 각각 다운로드",
         scaleDownloadZip: "현재 배율로 ZIP 다운로드",
@@ -1259,7 +1260,7 @@
         atlasEmpty: "Add sheets to the atlas first.",
         atlasReady: "Atlas ready: {count} sheets / {width}x{height}",
         scaleTitle: "Pixel Art Image Scaler",
-        scaleDesc: "Scale images by 2x, 3x, or 4x while preserving pixel edges.",
+        scaleDesc: "Scale images by 0.5x, 2x, 3x, or 4x while preserving pixel edges.",
         scaleDropHint: "You can upload files or paste images with Ctrl + V.",
         scaleDownloadAll: "Download each at current scale",
         scaleDownloadZip: "Download ZIP at current scale",
@@ -1376,7 +1377,7 @@
         atlasEmpty: "请先添加要放入图集的精灵图。",
         atlasReady: "图集已准备：{count} 张 / {width}x{height}",
         scaleTitle: "像素图缩放器",
-        scaleDesc: "以保留像素边缘的方式将图像放大 2 倍、3 倍或 4 倍。",
+        scaleDesc: "以保留像素边缘的方式将图像缩小到 0.5 倍，或放大 2 倍、3 倍、4 倍。",
         scaleDropHint: "可以上传文件，也可以用 Ctrl + V 粘贴图片。",
         scaleDownloadAll: "按当前倍率分别下载",
         scaleDownloadZip: "按当前倍率下载 ZIP",
@@ -1493,7 +1494,7 @@
         atlasEmpty: "先にアトラスへ入れるシートを追加してください。",
         atlasReady: "アトラス準備完了: {count}枚 / {width}x{height}",
         scaleTitle: "ピクセルアート画像スケーラー",
-        scaleDesc: "ピクセルのエッジを保ったまま画像を2倍、3倍、4倍に拡大します。",
+        scaleDesc: "ピクセルのエッジを保ったまま画像を0.5倍に縮小、または2倍、3倍、4倍に拡大します。",
         scaleDropHint: "ファイルのアップロードと Ctrl + V の貼り付けが使えます。",
         scaleDownloadAll: "現在の倍率で個別ダウンロード",
         scaleDownloadZip: "現在の倍率でZIPダウンロード",
@@ -2932,7 +2933,7 @@
 
         const buttonWrap = document.createElement("div");
         buttonWrap.style.marginTop = "8px";
-        [2, 3, 4].forEach((scale) => {
+        [0.5, 1, 2, 3, 4].forEach((scale) => {
           const button = document.createElement("button");
           button.type = "button";
           button.textContent = "x" + scale;
@@ -2949,14 +2950,16 @@
       function makeScaledBlob(data, scale) {
         return new Promise((resolve) => {
           const canvas = document.createElement("canvas");
-          canvas.width = data.img.width * scale;
-          canvas.height = data.img.height * scale;
+          const outputWidth = Math.max(1, Math.round(data.img.width * scale));
+          const outputHeight = Math.max(1, Math.round(data.img.height * scale));
+          canvas.width = outputWidth;
+          canvas.height = outputHeight;
           const context = canvas.getContext("2d");
           context.imageSmoothingEnabled = false;
           context.drawImage(
             data.img,
             0, 0, data.img.width, data.img.height,
-            0, 0, data.img.width * scale, data.img.height * scale
+            0, 0, outputWidth, outputHeight
           );
           canvas.toBlob(resolve, scaleFormat.value, scaleFormat.value === "image/jpeg" ? 0.92 : undefined);
         });
