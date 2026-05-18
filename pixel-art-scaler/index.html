@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Scale pixel art and PNG images cleanly by 0.5x, 2x, 3x, or 4x in your browser and download individual files or a ZIP.">
+  <meta name="description" content="Scale pixel art and PNG images cleanly by 0.5x, 2x, 3x, or 4x, remove solid backgrounds, and download individual files or a ZIP.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://yesterday-x2.github.io/online-image-tools/pixel-art-scaler/">
   <meta property="og:title" content="Free Pixel Art Image Scaler - Scale PNG 2x 3x 4x">
-  <meta property="og:description" content="Scale pixel art and PNG images cleanly by 0.5x, 2x, 3x, or 4x in your browser and download individual files or a ZIP.">
+  <meta property="og:description" content="Scale pixel art and PNG images cleanly by 0.5x, 2x, 3x, or 4x, remove solid backgrounds, and download individual files or a ZIP.">
   <meta property="og:type" content="website">
   <title>Free Pixel Art Image Scaler - Scale PNG 2x 3x 4x</title>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3470479809322768"
@@ -962,6 +962,12 @@
           <button type="button" id="scaleDownloadZip">현재 배율로 ZIP 다운로드</button>
           <button type="button" id="scaleClear">불러온 이미지 비우기</button>
         </div>
+        <div class="inline-options" style="justify-content:center;">
+          <label><input type="checkbox" id="scaleRemoveBg"> <span id="scaleRemoveBgLabel">배경색 투명 처리</span></label>
+          <label><span id="scaleBgColorLabel">제거할 배경색</span><input type="color" id="scaleBgColor" value="#ffffff"></label>
+          <label><span id="scaleBgToleranceLabel">허용 오차</span><input type="number" id="scaleBgTolerance" min="0" max="255" value="12" style="width:84px;"></label>
+          <span id="scaleBgHint" style="color:var(--muted);font-size:13px;">투명 배경은 PNG/WebP로 저장됩니다.</span>
+        </div>
         <div class="paste-area" id="scalePaste">Ctrl + V 로 이미지 붙여넣기</div>
         <div class="preview-grid" id="scalePreview"></div>
         <div class="transfer-actions" id="scaleTransfers">
@@ -1149,6 +1155,10 @@
         scaleDownloadZip: "현재 배율로 ZIP 다운로드",
         scaleFormat: "출력 형식",
         scaleClear: "불러온 이미지 비우기",
+        scaleRemoveBg: "배경색 투명 처리",
+        scaleBgColor: "제거할 배경색",
+        scaleBgTolerance: "허용 오차",
+        scaleBgHint: "투명 배경은 PNG/WebP로 저장됩니다.",
         paste: "Ctrl + V 로 이미지 붙여넣기",
         scaleToSheet: "현재 배율 결과를 스프라이트 시트로 보내기",
         scaleToRename: "현재 배율 결과를 파일명 교체기 원본에 넣기",
@@ -1266,6 +1276,10 @@
         scaleDownloadZip: "Download ZIP at current scale",
         scaleFormat: "Output format",
         scaleClear: "Clear loaded images",
+        scaleRemoveBg: "Make background color transparent",
+        scaleBgColor: "Background color to remove",
+        scaleBgTolerance: "Tolerance",
+        scaleBgHint: "Transparent output is saved as PNG/WebP.",
         paste: "Paste images with Ctrl + V",
         scaleToSheet: "Send current-scale output to Sprite Sheet",
         scaleToRename: "Send current-scale output to Rename originals",
@@ -1383,6 +1397,10 @@
         scaleDownloadZip: "按当前倍率下载 ZIP",
         scaleFormat: "输出格式",
         scaleClear: "清除已载入图片",
+        scaleRemoveBg: "将背景色设为透明",
+        scaleBgColor: "要移除的背景色",
+        scaleBgTolerance: "容差",
+        scaleBgHint: "透明背景会保存为 PNG/WebP。",
         paste: "用 Ctrl + V 粘贴图片",
         scaleToSheet: "将当前倍率结果发送到精灵图",
         scaleToRename: "将当前倍率结果发送到文件名替换原图",
@@ -1500,6 +1518,10 @@
         scaleDownloadZip: "現在の倍率でZIPダウンロード",
         scaleFormat: "出力形式",
         scaleClear: "読み込んだ画像を削除",
+        scaleRemoveBg: "背景色を透明化",
+        scaleBgColor: "削除する背景色",
+        scaleBgTolerance: "許容差",
+        scaleBgHint: "透明背景はPNG/WebPで保存されます。",
         paste: "Ctrl + V で画像を貼り付け",
         scaleToSheet: "現在の倍率の結果をスプライトシートへ送る",
         scaleToRename: "現在の倍率の結果をファイル名置換の元画像へ送る",
@@ -1800,6 +1822,10 @@
       setText("#scaleDownloadZip", "scaleDownloadZip");
       setText("#scaleFormatLabel", "scaleFormat");
       setText("#scaleClear", "scaleClear");
+      setText("#scaleRemoveBgLabel", "scaleRemoveBg");
+      setText("#scaleBgColorLabel", "scaleBgColor");
+      setText("#scaleBgToleranceLabel", "scaleBgTolerance");
+      setText("#scaleBgHint", "scaleBgHint");
       setText("#scalePaste", "paste");
       setText("#scaleToSheet", "scaleToSheet");
       setText("#scaleToRename", "scaleToRename");
@@ -2841,6 +2867,9 @@
       const preview = document.getElementById("scalePreview");
       const scaleButtons = document.querySelectorAll(".scale-buttons [data-scale]");
       const scaleFormat = document.getElementById("scaleFormat");
+      const removeBg = document.getElementById("scaleRemoveBg");
+      const removeBgColor = document.getElementById("scaleBgColor");
+      const removeBgTolerance = document.getElementById("scaleBgTolerance");
       const downloadAllButton = document.getElementById("scaleDownloadAll");
       const downloadZipButton = document.getElementById("scaleDownloadZip");
       const clearButton = document.getElementById("scaleClear");
@@ -2949,6 +2978,14 @@
 
       function makeScaledBlob(data, scale) {
         return new Promise((resolve) => {
+          const sourceCanvas = document.createElement("canvas");
+          sourceCanvas.width = data.img.width;
+          sourceCanvas.height = data.img.height;
+          const sourceContext = sourceCanvas.getContext("2d");
+          sourceContext.imageSmoothingEnabled = false;
+          sourceContext.drawImage(data.img, 0, 0);
+          removeBackgroundColor(sourceCanvas);
+
           const canvas = document.createElement("canvas");
           const outputWidth = Math.max(1, Math.round(data.img.width * scale));
           const outputHeight = Math.max(1, Math.round(data.img.height * scale));
@@ -2957,24 +2994,64 @@
           const context = canvas.getContext("2d");
           context.imageSmoothingEnabled = false;
           context.drawImage(
-            data.img,
+            sourceCanvas,
             0, 0, data.img.width, data.img.height,
             0, 0, outputWidth, outputHeight
           );
-          canvas.toBlob(resolve, scaleFormat.value, scaleFormat.value === "image/jpeg" ? 0.92 : undefined);
+          const mimeType = currentScaleMime();
+          canvas.toBlob(resolve, mimeType, mimeType === "image/jpeg" ? 0.92 : undefined);
         });
+      }
+
+      function currentScaleMime() {
+        if (removeBg.checked && scaleFormat.value === "image/jpeg") {
+          return "image/png";
+        }
+        return scaleFormat.value;
+      }
+
+      function hexToRgb(value) {
+        const normalized = value.replace("#", "");
+        return {
+          r: parseInt(normalized.slice(0, 2), 16),
+          g: parseInt(normalized.slice(2, 4), 16),
+          b: parseInt(normalized.slice(4, 6), 16)
+        };
+      }
+
+      function removeBackgroundColor(canvas) {
+        if (!removeBg.checked) {
+          return;
+        }
+
+        const context = canvas.getContext("2d");
+        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        const target = hexToRgb(removeBgColor.value);
+        const tolerance = clampNumber(removeBgTolerance.value, 12, 0);
+
+        for (let index = 0; index < data.length; index += 4) {
+          const redDiff = Math.abs(data[index] - target.r);
+          const greenDiff = Math.abs(data[index + 1] - target.g);
+          const blueDiff = Math.abs(data[index + 2] - target.b);
+          if (redDiff <= tolerance && greenDiff <= tolerance && blueDiff <= tolerance) {
+            data[index + 3] = 0;
+          }
+        }
+
+        context.putImageData(imageData, 0, 0);
       }
 
       async function downloadOne(index, scale) {
         const blob = await makeScaledBlob(images[index], scale);
-        downloadBlob(blob, replaceExtension(images[index].name, extensionForMime(scaleFormat.value)));
+        downloadBlob(blob, replaceExtension(images[index].name, extensionForMime(currentScaleMime())));
       }
 
       async function buildScaledRecords() {
         const scaledRecords = [];
         for (const data of images) {
           const blob = await makeScaledBlob(data, currentScale);
-          const outputName = replaceExtension(data.name, extensionForMime(scaleFormat.value));
+          const outputName = replaceExtension(data.name, extensionForMime(currentScaleMime()));
           scaledRecords.push({
             name: outputName,
             blob: blob
